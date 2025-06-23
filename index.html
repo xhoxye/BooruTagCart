@@ -1841,6 +1841,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         unsavedEditedTags.add(tag.name);
                         updateTagDisplay(tag);
                         mergedCount++;
+                        updateUnsavedChangesCount();
                     }
                 } else if (mergeType === 'all') {
                     // 强制合并所有翻译
@@ -1849,12 +1850,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         unsavedEditedTags.add(tag.name);
                         updateTagDisplay(tag);
                         mergedCount++;
+                        updateUnsavedChangesCount();
                     }
                 }
             }
         });
-        updateUnsavedChangesCount();
-        
+
+        updateUnsavedChangesCount();        
         if (mergedCount > 0) {
             showNotification(`成功从翻译参考文档合并 ${mergedCount} 个中文翻译！`, 5000, 'success');
         } else {
