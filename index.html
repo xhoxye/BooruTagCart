@@ -1,0 +1,2250 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="bg-[#f7f7f7]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小河的 Danbooru 标签助手 1.0.5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        /* 全局滚动条样式：显示滚动条 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Firefox 和 IE/Edge 全局滚动条 */
+        html { scrollbar-width: thin; scrollbar-color: #888 #f1f1f1; }
+
+        /* 搜索结果/热门标签面板的滚动条保持隐藏 */
+        #search-results-panel, #popular-tags-panel {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
+        }
+        /* 隐藏 Webkit 浏览器（Chrome, Safari）的特定滚动条 */
+        #search-results-panel::-webkit-scrollbar, #popular-tags-panel::-webkit-scrollbar {
+            display: none;
+        }
+
+
+        /* 标签项和已选标签的过渡效果 */
+        .tag-item, .selected-tag-item { transition: all 0.2s ease-in-out; }
+        /* 标签项和已选标签的悬停效果 */
+        .tag-item:hover, .selected-tag-item:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        
+        /* 最重要的按钮/激活颜色 */
+        .btn-active { background-color: #3b82f6 !important; color: white !important; }
+        #tag-detail-box { transition: opacity 0.2s ease-in-out; }
+
+        /* 自定义按钮和输入框样式 */
+        .custom-button {
+            height: 2.5rem; /* 默认高度 */
+            border-radius: 0.5rem; /* 统一圆角 */
+            font-size: 0.875rem; /* text-sm */
+            background-color: #e9e9e9;
+            color: #484644; /* 统一文字颜色 */
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            display: flex; /* 使用 flex 居中内容 */
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem; /* 图标与文本间距 */
+            padding: 0.5rem 1rem; /* 统一内边距 */
+            white-space: nowrap; /* 防止文本换行 */
+        }
+        .custom-button:hover {
+            background-color: #b9b9b9;
+            color: #484644;
+        }
+
+        /* 左侧边栏过滤器的较小自定义按钮 */
+        .custom-button-small {
+            height: 2rem; /* 较小高度 */
+            border-radius: 0.5rem; /* 统一圆角 */
+            font-size: 0.75rem; /* text-xs */
+            background-color: #e9e9e9;
+            color: #484644; /* 统一文字颜色 */
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.25rem; /* 较小间距 */
+            padding: 0.375rem 0.75rem; /* 较小内边距 */
+            white-space: nowrap;
+        }
+        .custom-button-small:hover {
+            background-color: #b9b9b9;
+            color: #484644;
+        }
+
+        .custom-input {
+            background-color: #e9e9e9;
+            color: #757575;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem; /*统一圆角*/
+        }
+        .custom-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+        .borderless-input {
+            border: none;
+            background-color: #e9e9e9; /* 统一背景色 */
+            color: #757575;
+            border-radius: 0.5rem;
+        }
+        .borderless-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+
+        /* 覆盖特定组件样式 */
+        #search-input {
+            border: 1px solid #d1d5db;
+            border-radius: 9999px; /* 全圆角 */
+            background-color: #e9e9e9; /* 与 custom-input 保持一致 */
+        }
+        #prompt-output {
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem; /* rounded-md */
+        }
+        #batch-custom-category-input { /* 调整批量自定义分类输入框的圆角 */
+            border-radius: 0.5rem;
+        }
+        .tag-item {
+            background-color: #6b6b6b; /* 标签英文名背景色 */
+        }
+        .tag-item span {
+            color: #ffffff; /* 标签统一字体颜色 */
+        }
+        /* 已选标签样式 */
+        .selected-tag-item {
+            display: flex; /* 使用 flexbox 对齐 */
+            align-items: center; /* 垂直居中 */
+            border-radius: 0.25rem;
+            overflow: hidden;
+            cursor: pointer;
+            height: 2rem; /* 固定高度 */
+            line-height: 2rem; /* 垂直居中内容 */
+            font-size: 0.875rem; /* text-sm */
+            transition: all 0.2s ease-in-out;
+        }
+        .selected-tag-item .en-name-part {
+            background-color: #6b6b6b; /* 英文名背景 */
+            color: #ffffff;
+            padding: 0 0.4rem; /* 调整内边距 */
+            display: flex;
+            align-items: center;
+            height: 100%; /* 占满父级高度 */
+            white-space: nowrap; /* 防止换行 */
+            overflow: hidden; /* 隐藏超出内容 */
+            text-overflow: ellipsis; /* 显示省略号 */
+            max-width: 130px; /* 固定最大宽度 */
+            flex-shrink: 1; /* 允许收缩 */
+        }
+        .selected-tag-item .cn-name-part {
+            background-color: var(--cn-bg-color); /* 中文名背景，由 JS 设置 */
+            color: #ffffff;
+            padding: 0 0.4rem; /* 调整内边距 */
+            font-size: 0.75rem; /* text-xs */
+            display: flex;
+            align-items: center;
+            height: 100%; /* 占满父级高度 */
+            white-space: nowrap; /* 防止换行 */
+            overflow: hidden; /* 隐藏超出内容 */
+            text-overflow: ellipsis; /* 显示省略号 */
+            max-width: 70px; /* 固定最大宽度 */
+            flex-shrink: 1; /* 允许收缩 */
+        }
+        
+        /* 修正后的可编辑字段样式，以获得更好的布局和点击区域 */
+        .tag-detail-row {
+            display: flex; /* 使用 flexbox 对齐 */
+            align-items: baseline; /* 文本基线对齐 */
+            gap: 8px; /* 减小间距 */
+            margin-bottom: 6px; /* 调整行间距 */
+            min-height: 30px; /* 确保行有最小高度 */
+        }
+
+        .tag-detail-row strong {
+            flex-shrink: 0; /* 防止标签缩小 */
+            width: 80px; /* 为标签设置固定宽度以对齐 */
+            text-align: right; /* 标签文本右对齐 */
+            padding-top: 4px; /* 与可编辑字段顶部对齐 */
+            line-height: 1.5; /* 统一行高，确保与内容对齐 */
+        }
+
+        .editable-field {
+            background-color: #f0f0f0;
+            padding: 4px 6px; /* 减小内边距 */
+            min-height: 24px; /* 确保最小高度以便交互 */
+            border-radius: 3px;
+            border: 1px solid #ccc; /* 明确边框 */
+            min-width: 150px; /* 调整最小宽度，允许内容扩展 */
+            flex-grow: 1; /* 允许可编辑字段占据可用空间 */
+            display: inline-block; /* 保持 inline-block 以与文本对齐 */
+            cursor: text; /* 明确设置为文本光标以指示可编辑性 */
+            line-height: 1.5; /* 统一行高 */
+            white-space: pre-wrap; /* 允许文本换行并保留空白 */
+            word-break: break-word; /* 单词换行 */
+            vertical-align: top; /* 文本垂直居中 */
+        }
+        .editable-field:hover {
+            border-color: #3b82f6;
+        }
+        .editable-field:focus {
+            outline: none; /* 移除默认轮廓 */
+            border-color: #3b82f6; /* 保持边框颜色变化 */
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); /* 添加微妙的焦点环 */
+        }
+        /* 可编辑字段中的占位符文本样式 */
+        .editable-field:empty:before {
+            content: attr(data-placeholder);
+            color: #999;
+            pointer-events: none; /* 允许点击穿透到可编辑内容 */
+        }
+        /* 静态标签详情值样式以允许换行 */
+        .tag-detail-value {
+            white-space: pre-wrap; /* 允许文本换行 */
+            word-break: break-all; /* 强制单词换行，防止过长挤出 */
+            flex-grow: 1; /* 允许占据可用空间 */
+            min-width: 0; /* 对 flex 项缩小很重要 */
+            padding: 4px 6px; /* 与可编辑字段保持一致 */
+            line-height: 1.5; /* 统一行高 */
+            background-color: #f0f0f0; /* 与可编辑字段背景色一致 */
+            border-radius: 3px; /* 与可编辑字段圆角一致 */
+            border: 1px solid #ccc; /* 与可编辑字段边框一致 */
+            vertical-align: top;
+        }
+
+        /* 修复：确保标签详情标题具有最小高度以防止布局偏移 */
+        #tag-detail-box .flex.justify-between.items-center.mb-3 {
+            min-height: 2.5rem; /* 与 custom-button 高度匹配 */
+        }
+
+        /* 标签项内信息/计数按钮样式 */
+        .tag-info-count-area {
+            background-color: #6b6b6b; /* 与 tag-item 背景匹配 */
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            display: flex; /* 使用 flex 对齐图标和文本 */
+            align-items: center;
+            gap: 4px; /* 图标和计数间的默认间距 */
+            flex-shrink: 0; /* 防止缩小 */
+            color: rgba(255, 255, 255, 0.7); /* 文本/图标的浅白色 */
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.625rem;
+            font-size: 0.875rem;
+        }
+        .tag-info-count-area:hover {
+            background-color: #868686; /* 悬停时颜色稍浅 */
+        }
+        /* 按钮内图标和计数的单独样式 */
+        .tag-info-count-area .fa-circle-info {
+            font-size: 1em; /* 默认图标大小 */
+        }
+        .tag-info-count-area .tag-count {
+            font-size: 0.75rem;
+            font-family: monospace;
+            color: white;
+            padding: 0 4px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        /* 新增：分区阴影 */
+        .section-divider-shadow {
+            position: relative;
+            padding-bottom: 24px;
+            margin-bottom: 24px;
+        }
+        .section-divider-shadow::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 5%;
+            width: 90%;
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(0,0,0,0.1), transparent);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* 调整左侧边栏过滤器中按钮组的间距 */
+        #category-filters, #sort-buttons {
+            gap: 0.375rem;
+        }
+
+        /* 确保类别按钮正确换行 */
+        #category-filters {
+            flex-wrap: wrap;
+            justify-content: flex-start;
+        }
+
+        /* Tab 按钮样式 */
+        .tab-btn {
+            border-bottom-width: 2px;
+            transition: border-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            white-space: nowrap; /* 防止文本换行 */
+        }
+        .tab-btn.active-tab {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+        .tab-btn:not(.active-tab) {
+            border-color: transparent;
+            color: #6b7280;
+        }
+        .tab-btn:hover:not(.active-tab) {
+            color: #3b82f6;
+        }
+
+        /* 新增：搜索结果/热门标签的固定高度和滚动条 */
+        #search-results-panel, #popular-tags-panel {
+            height: 1200px; /* 高度调整为1200px */
+            overflow-y: auto;
+            padding: 10px 15px 10px 10px;
+        }
+
+        /* 提示框样式 - 修改为右上角 */
+        #notification-box {
+            position: fixed;
+            top: 20px;
+            right: 20px; /* 修改为 right */
+            background-color: #4CAF50; /* Success green */
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #notification-box.error { /* 错误提示样式 */
+            background-color: #f44336; /* Red for error */
+        }
+        #notification-box.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 标签图鉴样式 */
+        #tag-image-gallery {
+            width: 100%;
+            height: 250px; /* 图鉴框固定高度调整为250px */
+            overflow-x: auto; /* 允许水平滚动 */
+            white-space: nowrap; /* 防止图片换行 */
+            display: flex; /* 使用flexbox布局图片 */
+            align-items: center; /* 垂直居中 */
+            gap: 8px; /* 图片之间的间距 */
+            padding: 8px 8px; /* 增加左右内边距，使其不紧靠边框 */
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .gallery-image-wrapper {
+            flex-shrink: 0; /* 防止图片缩小 */
+            width: 228px; /* 图片固定宽度调整为228px */
+            height: 228px; /* 图片固定高度调整为228px */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e9e9e9;
+            border-radius: 4px;
+            overflow: hidden; /* 隐藏超出部分 */
+            cursor: pointer; /* 可点击指示 */
+        }
+
+        .gallery-image-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* 等比例缩放，保持完整图片 */
+        }
+
+        .gallery-placeholder {
+            width: 228px; /* 占位图宽度调整为228px */
+            height: 228px; /* 占位图高度调整为228px */
+            display: inline-flex; /* 保持与图片一致的布局 */
+            flex-direction: column; /* 允许内容垂直排列 */
+            justify-content: center;
+            align-items: center;
+            background-color: #e9e9e9;
+            color: #a0a0a0;
+            border-radius: 4px;
+            font-size: 0.9em;
+            text-align: center;
+            flex-shrink: 0;
+            padding: 10px; /* 增加内边距 */
+            word-wrap: break-word; /* 允许长单词换行 */
+            white-space: normal; /* 允许文本换行 */
+            word-break: break-word; /* 强制单词内部换行 */
+        }
+
+        /* 标签图鉴标题的英文名过长显示省略号 */
+        #gallery-title-text { /* 注意这里是 #gallery-title-text */
+            max-width: calc(100% - 100px); /* 预留图标和“标签图鉴 - ”文本的空间 */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: inline-block; /* 确保省略号生效 */
+            vertical-align: middle; /* 垂直居中对齐 */
+        }
+
+        /* 新标签创建表单的弹窗样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-content .tag-detail-row {
+            margin-bottom: 10px;
+        }
+
+        .modal-content .tag-detail-row input,
+        .modal-content .tag-detail-row select {
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            flex-grow: 1;
+            background-color: #f9fafb;
+        }
+
+        /* 全屏图片查看器样式 */
+        #fullscreen-image-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        #fullscreen-image-viewer.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #fullscreen-image-viewer img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            user-select: none; /* 防止图片被选中 */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .viewer-nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 50%;
+            font-size: 2rem;
+            transition: background-color 0.2s ease-in-out;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .viewer-nav-arrow:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        #prev-image {
+            left: 20px;
+        }
+
+        #next-image {
+            right: 20px;
+        }
+
+        #image-counter {
+            position: absolute;
+            bottom: 20px;
+            color: white;
+            font-size: 1.2rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body class="text-gray-800 font-sans bg-[#f7f7f7]">
+
+    <div id="notification-box" style="display: none;">
+        <i class="fa-solid fa-check-circle" id="notification-icon"></i>
+        <span id="notification-message"></span>
+    </div>
+
+    <div id="app" class="max-w-screen-2xl mx-auto p-4 md:p-6">
+
+        <nav class="sticky top-0 z-20 bg-[#f7f7f7]/80 backdrop-blur-md -mx-4 md:-mx-6 px-4 md:px-6 py-3 mb-6 border-b relative">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl md:text-2xl font-bold text-[#5f5c5c] w-1/3">
+                    <i class="fa-solid fa-tags text-[#3b82f6]"></i> 小河的 Danbooru 标签助手 1.0.5
+                </h1>
+                <div class="w-1/3 text-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <div class="relative flex-grow max-w-md mx-auto">
+                        <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="search-input" placeholder="搜索标签 英文名/中文名/别名/自定义分类/..."
+                            class="w-full pl-10 pr-4 py-2 custom-input rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 transition" disabled>
+                        <button id="reset-search-btn" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition" title="重置搜索">
+                            <i class="fa-solid fa-times-circle"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="text-right flex items-center gap-2">
+                    <button id="save-data-btn" class="custom-button shadow-sm" style="display: none;" title="保存数据到CSV">
+                        <i class="fa-solid fa-save"></i> 保存数据 (<span id="unsaved-changes-count">0</span>)
+                    </button>
+                    <button id="reload-btn" class="custom-button shadow-sm" style="display: none;" title="重新加载数据">
+                        <i class="fa-solid fa-rotate-right"></i> 重新加载
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div id="loader-section" class="text-center p-8">
+            <h2 class="text-2xl font-semibold mb-4 text-[#5f5c5c]">加载标签数据</h2>
+            <p class="text-gray-500 mb-6">请选择数据源。</p>
+            <div class="flex flex-col items-center gap-4 mb-6">
+                <div class="w-full mx-auto flex items-center gap-2 max-w-screen-xl px-4 md:px-0"> 
+                    <input type="text" id="url-input" placeholder="输入CSV文件网络地址"
+                        class="flex-grow py-2 pl-3 pr-4 borderless-input focus:outline-none focus:ring-2 focus:ring-blue-400 transition"> 
+                    <button id="default-url-btn-1" class="custom-button shadow-sm" title="使用备选Danbooru CSV URL 1"> 备选 1
+                    </button>
+                    <button id="default-url-btn-2" class="custom-button shadow-sm" title="使用备选Danbooru CSV URL 2"> 备选 2
+                    </button>
+                </div>
+                <div class="flex justify-center gap-4 w-full max-w-md">
+                    <button id="load-url-btn" class="flex-1 custom-button shadow" title="从指定URL加载数据">
+                        <i class="fa-solid fa-globe"></i> 从 URL 加载 CSV
+                    </button>
+                    <button id="load-local-btn" class="flex-1 custom-button shadow" title="从本地CSV文件加载数据">
+                        <i class="fa-solid fa-upload"></i> 从本地加载 CSV
+                    </button>
+                    <input type="file" id="local-file-input" class="hidden" accept=".csv">
+                </div>
+            </div>
+
+            <div id="progress-container" class="mt-6 hidden">
+                <div class="w-full bg-gray-200 rounded-full h-2.5"><div id="progress-bar" class="bg-blue-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div></div>
+                <p id="progress-text" class="text-sm text-gray-500 mt-2"></p>
+            </div>
+        </div>
+
+        <main id="main-content" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4 items-start"> 
+            <aside class="md:col-span-1 flex flex-col gap-4"> 
+                <div class="p-4">
+                    <div class="flex border-b mb-4">
+                        <button id="tab-search" class="tab-btn flex-1 py-2 font-semibold text-center text-sm active-tab" data-panel="search" title="显示搜索结果"><i class="fa-solid fa-magnifying-glass"></i> 搜索结果</button>
+                        <button id="tab-popular" class="tab-btn flex-1 py-2 font-semibold text-center text-sm" data-panel="popular" title="显示热门标签"><i class="fa-solid fa-fire"></i> 热门标签</button>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-2 text-sm mb-4" id="category-filters"></div>
+                    <div class="flex flex-wrap gap-2 text-sm mb-4" id="sort-buttons"></div>
+                    
+                    <div class="flex items-center justify-between flex-wrap mb-4">
+                        <div class="flex flex-wrap gap-2 text-sm" id="limit-buttons">
+                           <button data-limit="15" class="limit-btn custom-button-small" title="显示15个结果">15</button>
+                           <button data-limit="30" class="limit-btn btn-active custom-button-small" title="显示30个结果">30</button>
+                           <button data-limit="60" class="limit-btn custom-button-small" title="显示60个结果">60</button>
+                        </div>
+                        <p id="results-stats" class="text-sm text-gray-500"></p>
+                    </div>
+
+                    <div id="search-results-panel"><div id="results-container" class="flex flex-col gap-1.5"></div></div>
+                    <div id="popular-tags-panel" class="hidden">
+                        <div id="popular-tags-container" class="flex flex-col gap-1.5"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="md:col-span-2 flex flex-col gap-4"> 
+                <div class="p-4 section-divider-shadow">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-[#5f5c5c]"><i class="fa-solid fa-check-square text-[#5f5c5c]"></i> 已选标签 (<span id="selected-count">0</span>)</h3>
+                        <div class="flex gap-2">
+                            <button id="clear-selected-btn" class="custom-button shadow" title="清空所有已选标签">
+                                <i class="fa-solid fa-eraser"></i> 清空
+                            </button>
+                        </div>
+                    </div>
+                    <div id="selected-tags" class="flex flex-wrap gap-2 min-h-[11rem] p-2 bg-gray-50 rounded content-start">
+                        <p id="selected-placeholder" class="text-gray-400 m-auto">点击左侧列表中的标签进行添加</p>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2 flex-wrap">
+                        <input type="text" id="batch-custom-category-input" placeholder="输入自定义分类"
+                            class="flex-grow py-2 pl-3 pr-4 borderless-input custom-input focus:outline-none focus:ring-2 focus:ring-blue-400 transition"> 
+                        <button id="batch-custom-category-btn" class="custom-button shadow" title="批量设置自定义分类">
+                            <i class="fa-solid fa-folder-open"></i> 批量自定义分类
+                        </button>
+                        <button id="batch-translate-btn" class="custom-button shadow" title="批量翻译已选标签">
+                            <i class="fa-solid fa-language"></i> 批量翻译
+                        </button>
+                        <button id="batch-add-btn" class="custom-button shadow" title="批量添加搜索结果中的标签到已选标签框">
+                            <i class="fa-solid fa-plus-square"></i> 批量添加
+                        </button>
+                        <button id="save-wildcard-btn" class="custom-button shadow" title="将已选标签保存为通配符文件">
+                            <i class="fa-solid fa-file-export"></i> 保存为通配符
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col md:flex-row md:gap-4">
+                    <div id="tag-detail-box" class="p-4 section-divider-shadow md:w-1/2"> 
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold text-[#5f5c5c]"><i class="fa-solid fa-circle-info text-[#5f5c5c]"></i> 标签详情 (<span id="unsaved-tag-edits">0</span> 个未保存)</h3>
+                            <div class="flex gap-2">
+                                <button class="custom-button shadow" id="create-new-tag-btn" title="创建一个新标签">
+                                    <i class="fa-solid fa-plus"></i> 创建新标签
+                                </button>
+                                <button class="custom-button shadow" id="translate-detail-button" style="display: none;" title="翻译此标签">
+                                    <i class="fa-solid fa-language"></i> 翻译
+                                </button>
+                            </div>
+                        </div>
+                        <div id="tag-detail-content" class="text-sm space-y-2">
+                            <p class="text-gray-400">点击左侧或已选标签查看详情</p>
+                        </div>
+                    </div>
+
+                    <div class="p-4 section-divider-shadow md:w-1/2"> 
+                        <div class="flex justify-between items-center mb-3">
+                               <h3 class="font-bold text-[#5f5c5c]"><i class="fa-solid fa-lightbulb text-[#5f5c5c]"></i> 生成的提示词 (Prompt)</h3>
+                               <button id="copy-prompt-btn" class="custom-button shadow" title="复制生成的提示词">
+                                    <i class="fa-regular fa-copy"></i> 复制
+                                </button>
+                        </div>
+                        <textarea id="prompt-output" class="w-full text-sm p-3 custom-input resize-none" rows="8" placeholder="选择标签后，这里将自动生成提示词..." readonly></textarea>
+                        <div id="prompt-formatters" class="mt-3 flex flex-wrap gap-2">
+                            <button data-format="comma" class="custom-button" title="逗号分隔">逗号分隔</button>
+                            <button data-format="space" class="custom-button" title="空格分隔">空格分隔</button>
+                            <button data-format="underline-to-space" class="custom-button" title="下划线转空格">下划线转空格</button>
+                            <button data-format="weight" class="custom-button" title="给每个标签添加权重">权重</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 section-divider-shadow">
+                    <h3 class="font-bold mb-3 text-[#5f5c5c]">
+                        <i class="fa-solid fa-image text-[#5f5c5c]"></i>
+                        <span id="gallery-title-text">标签图鉴</span> </h3>
+                    <div id="tag-image-gallery" class="flex overflow-x: auto; gap-2;">
+                        <div class="gallery-placeholder">请选择标签以查看图鉴</div>
+                    </div>
+                </div>
+
+                <div class="p-4"> 
+                    <h3 class="font-bold mb-3 text-[#5f5c5c]"><i class="fa-solid fa-chart-pie text-[#5f5c5c]"></i> 数据统计</h3>
+                    <div id="stats-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 text-center">
+                    </div>
+                </div>
+
+                <div class="p-4 section-divider-shadow">
+                    <h3 class="font-bold mb-3 text-[#5f5c5c]"><i class="fa-solid fa-book-open text-[#5f5c5c]"></i> 翻译参考文档</h3>
+                    <div class="flex flex-col items-center gap-4">
+                        <div class="w-full flex items-center gap-2">
+                            <input type="text" id="translation-url-input" placeholder="输入翻译参考CSV文件网络地址"
+                                class="flex-grow py-2 pl-3 pr-4 borderless-input focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+                            <button id="default-translation-url-btn" class="custom-button shadow-sm" title="使用备选翻译参考URL">备选URL</button>
+                        </div>
+                        <div class="flex justify-center gap-4 w-full">
+                            <button id="load-translation-url-btn" class="flex-1 custom-button shadow" title="从指定URL加载翻译参考">
+                                <i class="fa-solid fa-link"></i> 加载网络 CSV 文件
+                            </button>
+                            <button id="load-local-translation-btn" class="flex-1 custom-button shadow" title="从本地CSV文件加载翻译参考">
+                                <i class="fa-solid fa-file-arrow-up"></i> 加载本地 CSV 文件
+                            </button>
+                            <input type="file" id="local-translation-file-input" class="hidden" accept=".csv">
+                        </div>
+                        <div class="flex justify-center gap-4 w-full mt-2">
+                            <button id="merge-missing-translation-btn" class="flex-1 custom-button shadow" title="将翻译参考文档的翻译合并到主数据中缺失的标签">
+                                <i class="fa-solid fa-file-import"></i> 合并缺失翻译
+                            </button>
+                            <button id="merge-all-translation-btn" class="flex-1 custom-button shadow" title="将翻译参考文档的翻译强制合并到主数据中">
+                                <i class="fa-solid fa-file-import"></i> 合并全部翻译
+                            </button>
+                        </div>
+                        <p id="translation-ref-status" class="text-sm text-gray-500 mt-2">未加载翻译参考。</p>
+                    </div>
+                </div>
+                </section>
+        </main>
+
+        <div id="new-tag-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h3 class="text-xl font-bold mb-4">创建新标签</h3>
+                <div class="tag-detail-row">
+                    <strong>英文名:</strong> <input type="text" id="new-tag-name" placeholder="必填" class="custom-input">
+                </div>
+                <div class="tag-detail-row">
+                    <strong>中文名:</strong> <input type="text" id="new-tag-cnname" class="custom-input">
+                </div>
+                <div class="tag-detail-row">
+                    <strong>别名:</strong> <input type="text" id="new-tag-aliases" class="custom-input" placeholder="多个别名用逗号分隔">
+                </div>
+                <div class="tag-detail-row">
+                    <strong>类别:</strong> 
+                    <select id="new-tag-category" class="custom-input">
+                        <option value="0">通用 (General)</option>
+                        <option value="1">艺术家 (Artist)</option>
+                        <option value="3">版权 (Copyright)</option>
+                        <option value="4">角色 (Character)</option>
+                        <option value="5">元数据 (Metadata)</option>
+                    </select>
+                </div>
+                <div class="tag-detail-row">
+                    <strong>帖子数量:</strong> <input type="number" id="new-tag-count" value="0" min="0" class="custom-input">
+                </div>
+                <div class="tag-detail-row">
+                    <strong>自定义分类:</strong> <input type="text" id="new-tag-custom-category" class="custom-input">
+                </div>
+                <div class="flex justify-end gap-2 mt-4">
+                    <button id="cancel-new-tag-btn" class="custom-button">取消</button>
+                    <button id="save-new-tag-btn" class="custom-button btn-active">保存新标签</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="fullscreen-image-viewer" class="hidden">
+            <img id="fullscreen-image" src="" alt="Full Screen Image">
+            <div id="prev-image" class="viewer-nav-arrow"><i class="fa-solid fa-chevron-left"></i></div>
+            <div id="next-image" class="viewer-nav-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+            <div id="image-counter"></div>
+        </div>
+        
+        <footer class="mt-8 text-center text-gray-500 text-xs">
+            <p>&copy; 2025 - <a href="https://space.bilibili.com/14701583" target="_blank">小河的 Danbooru 标签助手. All rights reserved. Version 1.0.5 by xhox</a></p>
+        </footer>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- DOM 元素 ---
+    const loaderSection = document.getElementById('loader-section');
+    const mainContent = document.getElementById('main-content');
+    const urlInput = document.getElementById('url-input');
+    const loadUrlBtn = document.getElementById('load-url-btn');
+    const defaultUrlBtn1 = document.getElementById('default-url-btn-1'); 
+    const defaultUrlBtn2 = document.getElementById('default-url-btn-2'); 
+    const loadLocalBtn = document.getElementById('load-local-btn');
+    const reloadBtn = document.getElementById('reload-btn');
+    const saveDataBtn = document.getElementById('save-data-btn'); 
+    const unsavedChangesCount = document.getElementById('unsaved-changes-count'); 
+    const localFileInput = document.getElementById('local-file-input');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text'); 
+    const searchInput = document.getElementById('search-input');
+    const resetSearchBtn = document.getElementById('reset-search-btn'); 
+    const categoryFilters = document.getElementById('category-filters');
+    const sortButtons = document.getElementById('sort-buttons');
+    const limitButtons = document.getElementById('limit-buttons');
+    const resultsContainer = document.getElementById('results-container');
+    const popularTagsContainer = document.getElementById('popular-tags-container');
+    const resultsStats = document.getElementById('results-stats');
+    const selectedTagsContainer = document.getElementById('selected-tags');
+    const selectedCount = document.getElementById('selected-count');
+    const promptOutput = document.getElementById('prompt-output');
+    const copyPromptBtn = document.getElementById('copy-prompt-btn');
+    const tabSearch = document.getElementById('tab-search');
+    const tabPopular = document.getElementById('tab-popular');
+    const searchResultsPanel = document.getElementById('search-results-panel');
+    const popularTagsPanel = document.getElementById('popular-tags-panel');
+    const selectedPlaceholder = document.getElementById('selected-placeholder');
+    const clearSelectedBtn = document.getElementById('clear-selected-btn');
+    const promptFormatters = document.getElementById('prompt-formatters');
+    const tagDetailBox = document.getElementById('tag-detail-box');
+    const tagDetailContent = document.getElementById('tag-detail-content');
+    const unsavedTagEditsSpan = document.getElementById('unsaved-tag-edits'); 
+    const translateDetailButton = document.getElementById('translate-detail-button');
+    const batchTranslateBtn = document.getElementById('batch-translate-btn'); 
+    const batchCustomCategoryBtn = document.getElementById('batch-custom-category-btn'); 
+    const batchCustomCategoryInput = document.getElementById('batch-custom-category-input'); 
+    const notificationBox = document.getElementById('notification-box'); 
+    const notificationMessage = document.getElementById('notification-message'); 
+    const notificationIcon = document.getElementById('notification-icon'); 
+    const statsContainer = document.getElementById('stats-container');
+
+    const tagImageGallery = document.getElementById('tag-image-gallery');
+    const galleryTitleText = document.getElementById('gallery-title-text');
+
+    // 新增翻译参考文档相关DOM元素
+    const translationUrlInput = document.getElementById('translation-url-input');
+    const loadTranslationUrlBtn = document.getElementById('load-translation-url-btn');
+    const defaultTranslationUrlBtn = document.getElementById('default-translation-url-btn'); 
+    const loadLocalTranslationBtn = document.getElementById('load-local-translation-btn');
+    const localTranslationFileInput = document.getElementById('local-translation-file-input');
+    const translationRefStatus = document.getElementById('translation-ref-status');
+    const mergeMissingTranslationBtn = document.getElementById('merge-missing-translation-btn'); 
+    const mergeAllTranslationBtn = document.getElementById('merge-all-translation-btn');
+
+    // 新增功能按钮DOM元素
+    const batchAddBtn = document.getElementById('batch-add-btn'); // 批量添加按钮
+    const saveWildcardBtn = document.getElementById('save-wildcard-btn'); // 保存为通配符按钮
+    const createNewTagBtn = document.getElementById('create-new-tag-btn'); // 创建新标签按钮
+
+    // 新标签模态框元素
+    const newTagModal = document.getElementById('new-tag-modal');
+    const newTagNameInput = document.getElementById('new-tag-name');
+    const newTagCnNameInput = document.getElementById('new-tag-cnname');
+    const newTagAliasesInput = document.getElementById('new-tag-aliases');
+    const newTagCategorySelect = document.getElementById('new-tag-category');
+    const newTagCountInput = document.getElementById('new-tag-count');
+    const newTagCustomCategoryInput = document.getElementById('new-tag-custom-category');
+    const saveNewTagBtn = document.getElementById('save-new-tag-btn');
+    const cancelNewTagBtn = document.getElementById('cancel-new-tag-btn');
+
+    // 全屏图片查看器DOM元素
+    const fullscreenImageViewer = document.getElementById('fullscreen-image-viewer');
+    const fullscreenImage = document.getElementById('fullscreen-image');
+    const prevImageBtn = document.getElementById('prev-image');
+    const nextImageBtn = document.getElementById('next-image');
+    const imageCounter = document.getElementById('image-counter');
+
+
+    // --- 状态与配置 ---
+    const DANBOORU_CSV_URL = 'https://raw.githubusercontent.com/DominikDoom/a1111-sd-webui-tagcomplete/refs/heads/main/tags/danbooru.csv';
+    const ALTERNATIVE_CSV_URL_2 = 'https://raw.githubusercontent.com/DraconicDragon/dbr-e621-lists-archive/refs/heads/main/tag-lists/danbooru/danbooru_2025-05-01_pt25-ia-dd.csv'; 
+    const ALTERNATIVE_TRANSLATION_URL = 'https://raw.githubusercontent.com/Ir-Phen/Eagle_AItagger_byWD1.4/refs/heads/main/old-version/Tags-zh.csv'; 
+    let allTags = [];
+    let selectedTags = new Map();
+    let currentFilter = 'all';
+    let currentSort = 'heat_desc';
+    let displayLimit = 30;
+    let searchTimeout; 
+    let unsavedEditedTags = new Set(); 
+    let currentTagInDetail = null; 
+    let notificationTimeout; 
+
+    let translationReference = new Map(); // 用于存储翻译参考数据
+
+    // 全屏图片查看器相关状态
+    let currentGalleryImages = []; // 当前标签的图片 URL 数组
+    let currentImageIndex = 0; // 当前显示的图片索引
+
+    // 翻译 API 端点
+    const TRANSLATION_APIs = {
+        google: 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q=',
+    };
+
+    const CATEGORIES = {
+        0: { name: '通用', light: 'lightblue', dark: 'dodgerblue' }, 
+        1: { name: '艺术家', light: 'lightcoral', dark: 'firebrick' }, 
+        3: { name: '版权', light: 'violet', dark: 'darkorchid' }, 4: { name: '角色', light: 'lightgreen', dark: 'darkgreen' }, 
+        5: { name: '元数据', light: 'orange', dark: 'darkorange' } 
+    };
+
+    const SORTS = {
+        'heat_desc': { name: '热度 <i class="fa-solid fa-arrow-down"></i>', fn: (a, b) => b.count - a.count },
+        'heat_asc': { name: '热度 <i class="fa-solid fa-arrow-up"></i>', fn: (a, b) => a.count - b.count },
+        'alpha_asc': { name: '字母 <i class="fa-solid fa-arrow-down"></i>', fn: (a, b) => a.name.localeCompare(b.name) },
+        'alpha_desc': { name: '字母 <i class="fa-solid fa-arrow-up"></i>', fn: (a, b) => b.name.localeCompare(b.name) }
+    };
+
+    // --- 初始化 ---
+    urlInput.value = DANBOORU_CSV_URL; 
+    updateUnsavedChangesCount();
+    renderImageGallery(null); // 初始化时显示占位图
+    translationUrlInput.value = ALTERNATIVE_TRANSLATION_URL; // 默认填充备选翻译URL
+
+    // --- 核心函数 ---
+    async function loadData(source) {
+        setLoaderControlsState(true); 
+        
+        progressContainer.style.display = 'block';
+        progressBar.style.backgroundColor = '#3b82f6'; 
+
+        try {
+            const response = source instanceof File ? await new Response(source.stream()) : await fetch(source);
+            
+            if (!response.ok) throw new Error(`HTTP 错误！状态码: ${response.status}`);
+            const reader = response.body.getReader();
+            const contentLength = +response.headers.get('Content-Length');
+            let receivedLength = 0;
+            let partialLine = '';
+            let isFirstLine = true; 
+
+            allTags = []; 
+            selectedTags.clear(); 
+            unsavedEditedTags.clear(); 
+            updateUnsavedChangesCount();
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                receivedLength += value.length;
+                if (contentLength) progressBar.style.width = `${(receivedLength / contentLength) * 100}%`;
+                let text = new TextDecoder().decode(value, { stream: true });
+                let lines = (partialLine + text).split('\n');
+                partialLine = lines.pop();
+
+                for (const line of lines) {
+                    if (!line) continue;
+                    // 跳过 CSV 头部行
+                    if (isFirstLine && line.toLowerCase().startsWith('name,category,count,')) {
+                         isFirstLine = false; 
+                         continue; 
+                    }
+                    isFirstLine = false; 
+                    parseCSVLine(line);
+                }
+                progressText.textContent = `加载中... 已处理 ${allTags.length.toLocaleString()} 个标签`; 
+            }
+            if (partialLine) parseCSVLine(partialLine); 
+            
+            progressBar.style.width = `100%`;
+            progressText.textContent = `数据加载完成！共 ${allTags.length.toLocaleString()} 个标签。`; 
+            
+            postLoadSetup();
+        } catch (error) {
+            progressText.textContent = `加载失败: ${error.message}`; 
+            progressBar.style.backgroundColor = 'red';
+            setLoaderControlsState(false); 
+        } finally {
+            if (source instanceof File) {
+                localFileInput.value = ''; 
+            }
+        }
+    }
+    
+    // 设置加载控件状态
+    function setLoaderControlsState(disabled) {
+        loadUrlBtn.disabled = disabled;
+        loadLocalBtn.disabled = disabled;
+        urlInput.disabled = disabled;
+        defaultUrlBtn1.disabled = disabled; 
+        defaultUrlBtn2.disabled = disabled; 
+    }
+
+    // 去除字符串两端的引号并处理内部转义引号
+    function trimQuotes(value) {
+        if (value === null || typeof value === 'undefined') {
+            return '';
+        }
+        if (typeof value !== 'string') {
+            return String(value).trim();
+        }
+
+        let trimmedValue = value.trim();
+        
+        if (trimmedValue === '"' || trimmedValue === "''") { // 处理单引号和空双引号
+            return '';
+        }
+        
+        // 检查是否以双引号开头和结尾，并处理内部转义引号
+        if (trimmedValue.length >= 2 && trimmedValue.startsWith('"') && trimmedValue.endsWith('"')) {
+            const innerValue = trimmedValue.substring(1, trimmedValue.length - 1);
+            return innerValue.replace(/""/g, '"');
+        }
+        
+        return trimmedValue;
+    }
+
+    // 解析 CSV 行
+    function parseCSVLine(line) {
+        if (!line) return;
+
+        const parts = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') {
+                if (i + 1 < line.length && line[i+1] === '"') { 
+                    current += '"';
+                    i++; 
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                parts.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        parts.push(current); 
+
+        allTags.push({
+            name: trimQuotes(parts[0]), 
+            category: parseInt(trimQuotes(parts[1]), 10) || 0, 
+            count: parseInt(trimQuotes(parts[2]), 10) || 0,
+            aliases: trimQuotes(parts[3]), 
+            cnName: trimQuotes(parts[4]), 
+            customCategory: trimQuotes(parts[5]) 
+        });
+    }
+
+    // 翻译文本 (优先使用翻译参考文档，其次使用Google翻译)
+    async function translateText(text) {
+        const formattedTextForSearch = text.replace(/_/g, ' ');
+
+        // 1. 优先从翻译参考中查找
+        if (translationReference.has(text)) {
+            return translationReference.get(text);
+        }
+        // 如果原始带有下划线的名称没有，尝试用空格替换下划线后的名称查找
+        if (translationReference.has(formattedTextForSearch)) {
+             return translationReference.get(formattedTextForSearch);
+        }
+
+        // 2. 如果翻译参考中没有，回退到 Google 翻译 API
+        try {
+            const url = `${TRANSLATION_APIs.google}${encodeURIComponent(formattedTextForSearch)}`;
+            
+            const response = await fetch(url);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`翻译 API 错误 (${response.status}): ${errorText}`);
+            }
+
+            const data = await response.json();
+            return data[0][0][0]; 
+        } catch (error) {
+            console.error(`Google 翻译错误:`, error);
+            return '';
+        }
+    }
+
+    // 加载翻译参考文档数据
+    async function loadTranslationReferenceData(source) {
+        translationRefStatus.textContent = '加载翻译参考中...';
+        translationRefStatus.style.color = '#3b82f6';
+        mergeMissingTranslationBtn.disabled = true; // 加载时禁用合并按钮
+        mergeAllTranslationBtn.disabled = true; // 加载时禁用合并按钮
+        loadTranslationUrlBtn.disabled = true;
+        loadLocalTranslationBtn.disabled = true;
+        defaultTranslationUrlBtn.disabled = true;
+        
+        try {
+            const response = source instanceof File ? await new Response(source.stream()) : await fetch(source);
+
+            if (!response.ok) throw new Error(`HTTP 错误！状态码: ${response.status}`);
+            const reader = response.body.getReader();
+            let partialLine = '';
+            let isFirstLine = true; 
+
+            translationReference.clear(); // 清空旧数据
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                let text = new TextDecoder().decode(value, { stream: true });
+                let lines = (partialLine + text).split('\n');
+                partialLine = lines.pop();
+
+                for (const line of lines) {
+                    if (!line) continue;
+                    if (isFirstLine) { 
+                        // 尝试识别常见的 CSV 头部，如果匹配则跳过
+                        const lowerCaseLine = line.toLowerCase();
+                        if (lowerCaseLine.includes('en_tag') && lowerCaseLine.includes('cn_tag')) {
+                            isFirstLine = false;
+                            continue;
+                        } else if (lowerCaseLine.startsWith('name,category,count,')) { // 避免误跳过 danbooru csv 的头
+                            isFirstLine = false; // Danbooru CSV的头可能被当作翻译参考的头，这里也跳过
+                            continue;
+                        }
+                    }
+                    isFirstLine = false; 
+                    parseTranslationRefLine(line);
+                }
+            }
+            if (partialLine) parseTranslationRefLine(partialLine);
+
+            translationRefStatus.textContent = `翻译参考加载完成！共 ${translationReference.size.toLocaleString()} 条记录。`;
+            translationRefStatus.style.color = '#4CAF50';
+            mergeMissingTranslationBtn.disabled = false; // 加载成功后启用合并按钮
+            mergeAllTranslationBtn.disabled = false; // 加载成功后启用合并按钮
+            return true; // 表示加载成功
+        } catch (error) {
+            translationRefStatus.textContent = `翻译参考加载失败: ${error.message}`;
+            translationRefStatus.style.color = '#f44336';
+            console.error('加载翻译参考失败:', error);
+            mergeMissingTranslationBtn.disabled = true; // 加载失败禁用合并按钮
+            mergeAllTranslationBtn.disabled = true; // 加载失败禁用合并按钮
+            return false; // 表示加载失败
+        } finally {
+            loadTranslationUrlBtn.disabled = false;
+            loadLocalTranslationBtn.disabled = false;
+            defaultTranslationUrlBtn.disabled = false;
+        }
+    }
+
+    // 解析翻译参考 CSV 行 (至少包含两列: 英文名, 中文翻译)
+    function parseTranslationRefLine(line) {
+        if (!line) return;
+        const parts = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') {
+                if (i + 1 < line.length && line[i+1] === '"') {
+                    current += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                parts.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        parts.push(current);
+
+        // 确保至少有两列，第一列为英文名，第二列为中文翻译
+        if (parts.length >= 2) {
+            const englishName = trimQuotes(parts[0]);
+            const chineseTranslation = trimQuotes(parts[1]);
+            // 确保英文名和中文翻译都不为空
+            if (englishName && chineseTranslation) {
+                translationReference.set(englishName, chineseTranslation);
+            }
+        }
+    }
+
+    // 数据加载后的设置
+    function postLoadSetup() {
+        allTags.sort(SORTS[currentSort].fn); 
+        loaderSection.style.display = 'none';
+        mainContent.style.display = 'grid';
+        reloadBtn.style.display = 'flex'; 
+        saveDataBtn.style.display = 'flex'; 
+        searchInput.disabled = false;
+        setupControls();
+        handleSearch();
+        renderPopularTags();
+        renderStats();
+        updateUnsavedChangesCount(); 
+    }
+
+    // 设置控件
+    function setupControls() {
+        let filterHtml = `<button data-category="all" class="filter-btn btn-active custom-button-small" title="显示所有类别">全部</button>`;
+        for (const id in CATEGORIES) {
+            const cat = CATEGORIES[id];
+            filterHtml += `<button data-category="${id}" class="filter-btn custom-button-small" style="--tw-shadow-color: ${cat.light}; box-shadow: 0 0 0 0px ${cat.light}; hover:bg- ${cat.dark};" title="显示${cat.name}类别">${cat.name}</button>`;
+        }
+        categoryFilters.innerHTML = filterHtml;
+
+        let sortHtml = '';
+        for (const id in SORTS) {
+            sortHtml += `<button data-sort="${id}" class="sort-btn ${id === currentSort ? 'btn-active' : ''} custom-button-small" title="按${SORTS[id].name.replace(/ <i.*<\/i>/, '')}排序">${SORTS[id].name}</button>`;
+        }
+        sortButtons.innerHTML = sortHtml;
+    }
+
+    // --- 渲染与更新函数 ---
+    // 格式化计数
+    function formatCount(num) {
+        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+        if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+        return num.toString();
+    }
+
+    // 渲染搜索结果
+    function renderResults(tags) {
+        resultsStats.textContent = `找到 ${tags.length.toLocaleString()} 个结果，显示前 ${displayLimit} 个。`;
+        
+        if (tags.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="text-center text-gray-400 p-4">
+                    <i class="fa-solid fa-box-open fa-2x mb-2"></i>
+                    <p>未找到匹配的标签</p>
+                </div>
+            `;
+        } else {
+            resultsContainer.innerHTML = tags.slice(0, displayLimit).map(tag => createTagHtml(tag)).join('');
+        }
+    }
+
+    // 渲染热门标签
+    function renderPopularTags() {
+        let tagsToFilter = allTags;
+        if (currentFilter !== 'all') {
+            tagsToFilter = allTags.filter(t => t.category == currentFilter);
+        }
+        if (tagsToFilter.length === 0) {
+            popularTagsContainer.innerHTML = `
+                <div class="text-center text-gray-400 p-4">
+                    <i class="fa-solid fa-box-open fa-2x mb-2"></i>
+                    <p>此类别下无热门标签</p>
+                </div>
+            `;
+        } else {
+            popularTagsContainer.innerHTML = tagsToFilter.sort(SORTS[currentSort].fn).slice(0, displayLimit).map(tag => createTagHtml(tag)).join('');
+        }
+    }
+
+    // 创建标签 HTML
+    function createTagHtml(tag) {
+        const cat = CATEGORIES[tag.category] || { light: 'lightgray', dark: 'gray' };
+        const isSelected = selectedTags.has(tag.name);
+        const displayCnName = tag.cnName !== '' ? tag.cnName : ''; 
+        const displayCustomCategory = tag.customCategory !== '' ? tag.customCategory : ''; 
+        
+        return `
+            <div class="tag-item flex justify-between items-center p-1.5 rounded cursor-pointer ${isSelected ? 'opacity-50' : ''}" 
+                 data-tag-name="${tag.name}">
+                <div class="flex-grow min-w-0 mr-2 flex items-center">
+                    <div class="truncate" title="${tag.aliases} / ${displayCnName || '未翻译'} / ${displayCustomCategory || '未分类'}">
+                        <span class="font-semibold text-sm text-white">${tag.name}</span>
+                        ${displayCnName ? `<span class="text-xs text-white ml-2" style="background-color: ${cat.dark}; padding: 1px 3px; border-radius: 3px;">${displayCnName}</span>` : ''}
+                    </div>
+                </div>
+                <button class="tag-info-count-area" 
+                        title="查看并编辑详情" 
+                        data-tag-name="${tag.name}" 
+                        data-action="details-only">
+                    <i class="fa-solid fa-circle-info" style="color: ${cat.dark};"></i>
+                    <span class="tag-count" style="background-color: ${cat.dark};">${formatCount(tag.count)}</span>
+                </button>
+            </div>`;
+    }
+
+    // 渲染已选标签
+    function renderSelectedTags() {
+        selectedPlaceholder.style.display = selectedTags.size === 0 ? 'block' : 'none';
+        selectedTagsContainer.innerHTML = Array.from(selectedTags.values()).map(tag => {
+            const cat = CATEGORIES[tag.category] || { dark: 'gray' };
+            const displayCnName = tag.cnName !== '' ? tag.cnName : ''; 
+            
+            return `
+                <div class="selected-tag-item" style="--cn-bg-color: ${cat.dark};" data-tag-name="${tag.name}">
+                    <div class="en-name-part">${tag.name}</div>
+                    ${displayCnName ? `<div class="cn-name-part">${displayCnName}</div>` : ''}
+                </div>`;
+        }).join('');
+        selectedCount.textContent = selectedTags.size;
+        updatePrompt('comma'); // 默认生成逗号分隔的提示词
+    }
+    
+    // 更新提示词
+    function updatePrompt(format = 'comma') {
+        const tags = Array.from(selectedTags.values());
+        let text = '';
+        switch (format) {
+            case 'space':
+                text = tags.map(t => t.name).join(' ');
+                break;
+            case 'underline-to-space': // 下划线转空格
+                text = tags.map(t => t.name.replace(/_/g, ' ')).join(', ');
+                break;
+            case 'weight': // 权重
+                text = tags.map(t => `(${t.name}:1.1)`).join(', ');
+                break;
+            case 'comma':
+            default:
+                text = tags.map(t => t.name).join(', ');
+        }
+        promptOutput.value = text;
+    }
+
+    // 渲染统计数据
+    function renderStats() {
+        const categoryCounts = {};
+        for (const id in CATEGORIES) {
+            categoryCounts[id] = 0;
+        }
+
+        allTags.forEach(tag => {
+            if (categoryCounts[tag.category] !== undefined) {
+                categoryCounts[tag.category]++;
+            }
+        });
+
+        let statsHtml = `
+            <div class="p-2 bg-gray-100 rounded-lg">
+                <p class="text-lg font-bold text-gray-700">${allTags.length.toLocaleString()}</p>
+                <p class="text-xs text-gray-500">总标签数</p>
+            </div>
+        `;
+        for (const id in CATEGORIES) {
+            const cat = CATEGORIES[id];
+            const count = categoryCounts[id];
+            statsHtml += `
+                <div class="p-2 bg-gray-100 rounded-lg">
+                    <p class="text-lg font-bold" style="color: ${cat.dark};">${count.toLocaleString()}</p>
+                    <p class="text-xs text-gray-500">${cat.name}</p>
+                </div>
+            `;
+        }
+        statsContainer.innerHTML = statsHtml;
+    }
+
+    // 渲染图片画廊
+    function renderImageGallery(tagName) {
+        tagImageGallery.innerHTML = ''; // 清空现有图片
+        galleryTitleText.textContent = tagName ? `标签图鉴 - ${tagName}` : '标签图鉴'; 
+        currentGalleryImages = []; // 清空当前图库图片
+
+        if (!tagName) {
+            tagImageGallery.innerHTML = `<div class="gallery-image-wrapper"><img src="images/xhox_welcome.webp" alt="Welcome Image"></div>
+                                        <div class="gallery-placeholder">请选择标签以查看图鉴</div>`;
+            return;
+        }
+
+        let imagesToLoad = [];
+        for (let i = 1; i <= 4; i++) { // 循环4次，对应 _1.webp 到 _4.webp
+            imagesToLoad.push(`images/${tagName}_${i}.webp`);
+        }
+
+        let loadedPromises = imagesToLoad.map(imageUrl => {
+            return new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => {
+                    resolve({ url: imageUrl, loaded: true });
+                };
+                img.onerror = () => {
+                    resolve({ url: imageUrl, loaded: false });
+                };
+                img.src = imageUrl;
+            });
+        });
+
+        Promise.all(loadedPromises).then(results => {
+            let imagesHtml = '';
+            let validImagesCount = 0;
+            currentGalleryImages = []; // 清空确保没有旧数据
+
+            results.forEach(result => {
+                if (result.loaded) {
+                    currentGalleryImages.push(result.url); // 只添加成功加载的图片
+                    validImagesCount++;
+                }
+            });
+
+            // 根据文件名中的数字进行排序，确保顺序正确
+            currentGalleryImages.sort((a, b) => {
+                const numA = parseInt(a.match(/_(\d+)\.webp$/)?.[1] || 0);
+                const numB = parseInt(b.match(/_(\d+)\.webp$/)?.[1] || 0);
+                return numA - numB;
+            });
+
+            // 如果没有成功加载的图片，显示占位符
+            if (validImagesCount === 0) {
+                tagImageGallery.innerHTML = `<div class="gallery-placeholder">“${tagName}”暂无参考图片</div>`;
+            } else {
+                // 重新构建 HTML，使用排序后的 currentGalleryImages
+                tagImageGallery.innerHTML = currentGalleryImages.map(imageUrl => {
+                    return `<div class="gallery-image-wrapper" data-image-url="${imageUrl}"><img src="${imageUrl}" alt="${tagName} ${imageUrl.match(/_(\d+)\.webp$/)[1]}"></div>`;
+                }).join('');
+            }
+        });
+    }
+
+    // 将数据保存为 CSV
+    function saveDataAsCsv() {
+        if (allTags.length === 0) {
+            showNotification('没有可保存的数据！', 3000, 'error');
+            return;
+        }
+
+        const fields = ['name', 'category', 'count', 'aliases', 'cnName', 'customCategory'];
+        const csvRows = allTags.map(tag => {
+            const row = fields.map(field => {
+                let value = tag[field];
+                if (value === null || value === undefined) {
+                    value = '';
+                } else {
+                    value = String(value);
+                }
+                // 如果值包含逗号或双引号，或者值为空，则用双引号括起来并转义内部双引号
+                return (value.includes(',') || value.includes('"') || value.trim() === '') ? `"${value.replace(/"/g, '""')}"` : value;
+            });
+            return row.join(',');
+        });
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `danbooru_tags_translated_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(link); 
+        link.click();
+        document.body.removeChild(link); 
+        URL.revokeObjectURL(link.href); 
+        
+        unsavedEditedTags.clear(); 
+        updateUnsavedChangesCount();
+        showNotification('数据已成功保存！');
+    }
+
+    // 更新未保存的更改计数
+    function updateUnsavedChangesCount() {
+        unsavedChangesCount.textContent = unsavedEditedTags.size;
+        unsavedTagEditsSpan.textContent = unsavedEditedTags.size;
+    }
+
+    // 更新标签显示
+    function updateTagDisplay(tagData) {
+        // 更新搜索结果/热门标签 (左侧面板)
+        document.querySelectorAll(`.tag-item[data-tag-name="${tagData.name}"]`).forEach(tagElement => {
+            const displayCnName = tagData.cnName !== '' ? tagData.cnName : '';
+            const displayCustomCategory = tagData.customCategory !== '' ? tagData.customCategory : '';
+            
+            const titleElement = tagElement.querySelector('.truncate');
+            if (titleElement) {
+                titleElement.title = `${tagData.aliases} / ${displayCnName || '未翻译'} / ${displayCustomCategory || '未分类'}`;
+            }
+
+            let cnNameSpan = tagElement.querySelector('.tag-item .text-xs');
+            if (displayCnName) {
+                if (!cnNameSpan) {
+                    cnNameSpan = document.createElement('span');
+                    cnNameSpan.className = 'text-xs text-white ml-2';
+                    const cat = CATEGORIES[tagData.category] || { light: 'lightgray', dark: 'gray' };
+                    cnNameSpan.style.backgroundColor = cat.dark;
+                    cnNameSpan.style.padding = '1px 3px';
+                    cnNameSpan.style.borderRadius = '3px';
+                    tagElement.querySelector('.truncate').appendChild(cnNameSpan);
+                }
+                cnNameSpan.textContent = displayCnName;
+            } else {
+                cnNameSpan?.remove();
+            }
+        });
+
+        // 更新已选标签 (中间面板)
+        document.querySelectorAll(`.selected-tag-item[data-tag-name="${tagData.name}"]`).forEach(tagElement => {
+            const displayCnName = tagData.cnName !== '' ? tagData.cnName : '';
+            let cnNamePart = tagElement.querySelector('.cn-name-part'); 
+            
+            if (displayCnName) {
+                if (!cnNamePart) {
+                    cnNamePart = document.createElement('div');
+                    cnNamePart.className = 'cn-name-part';
+                    const cat = CATEGORIES[tagData.category] || { dark: 'gray' };
+                    cnNamePart.style.setProperty('--cn-bg-color', cat.dark);
+                    tagElement.appendChild(cnNamePart);
+                }
+                cnNamePart.textContent = displayCnName;
+            } else {
+                cnNamePart?.remove();
+            }
+        });
+    }
+
+    // 显示通知
+    function showNotification(message, duration = 5000, type = 'success') { // 延长至 5 秒
+        clearTimeout(notificationTimeout);
+        notificationMessage.textContent = message;
+        notificationBox.classList.remove('success', 'error'); // 清除旧样式
+        notificationBox.classList.add(type); // 添加新样式
+
+        if (type === 'success') {
+            notificationIcon.className = 'fa-solid fa-check-circle';
+            notificationBox.style.backgroundColor = '#4CAF50';
+        } else if (type === 'error') {
+            notificationIcon.className = 'fa-solid fa-times-circle';
+            notificationBox.style.backgroundColor = '#f44336';
+        } else { // 默认为信息类型
+            notificationIcon.className = 'fa-solid fa-info-circle';
+            notificationBox.style.backgroundColor = '#2196F3';
+        }
+
+
+        notificationBox.style.display = 'flex'; // 显示通知框
+        // 强制回流以确保过渡效果
+        notificationBox.offsetHeight; 
+        notificationBox.classList.add('show');
+
+        notificationTimeout = setTimeout(() => {
+            notificationBox.classList.remove('show');
+            setTimeout(() => {
+                notificationBox.style.display = 'none'; // 过渡结束后完全隐藏
+            }, 300); 
+        }, duration);
+    }
+
+    // --- 事件处理函数 ---
+    function handleSearchInput() {
+        if (popularTagsPanel.style.display !== 'none') {
+            tabSearch.click(); 
+        }
+        
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(handleSearch, 300); 
+    }
+
+    // 处理搜索
+    function handleSearch() {
+        const query = searchInput.value.toLowerCase().trim();
+        let filtered = allTags.filter(tag => {
+            const inCategory = currentFilter === 'all' || tag.category == currentFilter;
+            if (!inCategory) return false;
+            if (!query) return true;
+            return tag.name.toLowerCase().includes(query) || tag.aliases.toLowerCase().includes(query) || (tag.cnName && tag.cnName.includes(query)) || (tag.customCategory && tag.customCategory.includes(query));
+        });
+        filtered.sort(SORTS[currentSort].fn);
+        renderResults(filtered);
+    }
+    
+    // 处理标签交互
+    function handleTagInteraction(e) {
+        const tagItem = e.target.closest('.tag-item');
+        const selectedTagItem = e.target.closest('.selected-tag-item');
+        
+        if (tagItem) {
+            const tagName = tagItem.dataset.tagName;
+            const tagData = allTags.find(t => t.name === tagName);
+            if (!tagData) return;
+
+            const clickedDetailsOnlyArea = e.target.closest('[data-action="details-only"]');
+
+            if (clickedDetailsOnlyArea) {
+                showTagDetails(tagData);
+                renderImageGallery(tagData.name); // 点击详情时更新图鉴
+            } else {
+                if (selectedTags.has(tagName)) {
+                    selectedTags.delete(tagName);
+                    tagItem.classList.remove('opacity-50');
+                } else {
+                    selectedTags.set(tagName, tagData);
+                    tagItem.classList.add('opacity-50');
+                }
+                renderSelectedTags();
+                showTagDetails(tagData); 
+                renderImageGallery(tagData.name); // 点击标签时更新图鉴
+            }
+        } else if (selectedTagItem) {
+            const tagName = selectedTagItem.dataset.tagName;
+            selectedTags.delete(tagName);
+            const searchResultTag = document.querySelector(`.tag-item[data-tag-name="${tagName}"]`);
+            searchResultTag?.classList.remove('opacity-50');
+            renderSelectedTags();
+            if (currentTagInDetail?.name === tagName) {
+                showTagDetails(null); 
+                renderImageGallery(null); // 如果移除的是当前详情标签，清空图鉴
+            }
+        }
+    }
+
+    // 显示标签详情
+    function showTagDetails(tag) {
+        if (!tag) {
+            tagDetailContent.innerHTML = '<p class="text-gray-400">点击左侧或已选标签查看详情</p>';
+            translateDetailButton.style.display = 'none'; // 没有选中标签时隐藏翻译按钮
+            currentTagInDetail = null;
+            renderImageGallery(null); // 清空图鉴并显示占位图
+            return;
+        }
+
+        // 如果点击的是同一个标签，则不刷新详情和图鉴
+        if (currentTagInDetail?.name === tag.name) {
+            return; 
+        }
+
+        currentTagInDetail = tag;
+
+        const cat = CATEGORIES[tag.category] || {name: '未知'};
+        const cnNamePlaceholder = "点击编辑 (待填写)";
+        const customCategoryPlaceholder = "点击编辑 (待填写)";
+
+        tagDetailContent.innerHTML = `
+            <div class="tag-detail-row">
+                <strong>英文名:</strong> 
+                <span class="tag-detail-value">${tag.name}</span>
+            </div>
+            <div class="tag-detail-row">
+                <strong>中文名:</strong> <span contenteditable="true" class="editable-field" data-field="cnName" data-tag-name="${tag.name}" data-placeholder="${cnNamePlaceholder}"></span>
+            </div>
+            <div class="tag-detail-row">
+                <strong>别名:</strong> <span class="tag-detail-value">${tag.aliases.split(',').filter(a => a.trim() !== '').join(', ') || '无'}</span>
+            </div>
+            <div class="tag-detail-row">
+                <strong>热度:</strong> <span class="tag-detail-value">${tag.count.toLocaleString()}</span>
+            </div>
+            <div class="tag-detail-row">
+                <strong>类别:</strong> <span class="font-semibold tag-detail-value" style="color: ${cat.dark};">${cat.name}</span>
+            </div>
+            <div class="tag-detail-row">
+                <strong>自定义分类:</strong> <span contenteditable="true" class="editable-field" data-field="customCategory" data-tag-name="${tag.name}" data-placeholder="${customCategoryPlaceholder}"></span>
+            </div>
+        `;
+
+        const cnNameField = tagDetailContent.querySelector('[data-field="cnName"]');
+        if (cnNameField) cnNameField.textContent = tag.cnName;
+        const customCategoryField = tagDetailContent.querySelector('[data-field="customCategory"]');
+        if (customCategoryField) customCategoryField.textContent = tag.customCategory;
+
+        // 根据中文名显示翻译按钮
+        if (tag.cnName === '') {
+            translateDetailButton.style.display = 'flex';
+            translateDetailButton.dataset.tagName = tag.name; // 在按钮上设置标签名
+        } else {
+            translateDetailButton.style.display = 'none';
+        }
+
+        tagDetailContent.querySelectorAll('.editable-field').forEach(field => {
+            field.addEventListener('input', handleEditableFieldInput);
+            field.addEventListener('blur', handleEditableFieldBlur);
+        });
+
+        renderImageGallery(tag.name); // 显示标签详情时更新图鉴
+    }
+
+    // 处理可编辑字段输入
+    function handleEditableFieldInput(event) {
+        const field = event.target;
+        const updatedValue = field.textContent.trim(); 
+        const fieldName = field.dataset.field;
+        const tagNameForEdit = field.dataset.tagName;
+        
+        const tagToUpdate = allTags.find(t => t.name === tagNameForEdit);
+        if (tagToUpdate) {
+            tagToUpdate[fieldName] = updatedValue; 
+            unsavedEditedTags.add(tagNameForEdit); 
+            updateUnsavedChangesCount();
+            updateTagDisplay(tagToUpdate);
+
+            if (fieldName === 'cnName') {
+                if (updatedValue !== '') {
+                    translateDetailButton.style.display = 'none';
+                } else {
+                    translateDetailButton.style.display = 'flex';
+                }
+            }
+        }
+    }
+
+    // 处理可编辑字段失去焦点
+    function handleEditableFieldBlur(event) {
+        const field = event.target;
+        const updatedValue = field.textContent.trim();
+        const fieldName = field.dataset.field;
+        const tagNameForEdit = field.dataset.tagName;
+
+        const tagToUpdate = allTags.find(t => t.name === tagNameForEdit);
+        if (tagToUpdate) {
+            tagToUpdate[fieldName] = updatedValue;
+            unsavedEditedTags.add(tagNameForEdit);
+            updateUnsavedChangesCount();
+            updateTagDisplay(tagToUpdate);
+        }
+    }
+
+    // 重置状态
+    function resetState() {
+        mainContent.style.display = 'none';
+        reloadBtn.style.display = 'none';
+        saveDataBtn.style.display = 'none'; 
+        loaderSection.style.display = 'block';
+        
+        allTags = [];
+        selectedTags.clear();
+        unsavedEditedTags.clear(); 
+        updateUnsavedChangesCount();
+        
+        searchInput.disabled = true;
+        searchInput.value = '';
+        resultsContainer.innerHTML = '';
+        popularTagsContainer.innerHTML = '';
+        renderSelectedTags();
+        statsContainer.innerHTML = '';
+        
+        progressContainer.style.display = 'none';
+        progressBar.style.width = '0%';
+        progressBar.style.backgroundColor = '#3b82f6'; 
+        
+        setLoaderControlsState(false); 
+
+        urlInput.value = DANBOORU_CSV_URL;
+        showTagDetails(null);
+        renderImageGallery(null); // 重置时清空图鉴
+        // 重置 Tab 激活状态
+        tabSearch.classList.add('active-tab');
+        tabPopular.classList.remove('active-tab');
+        // 重置翻译参考状态显示
+        translationRefStatus.textContent = '未加载翻译参考。';
+        translationRefStatus.style.color = '#6b7280';
+        translationReference.clear(); // 清空翻译参考数据
+        mergeMissingTranslationBtn.disabled = true; // 重置时禁用合并按钮
+        mergeAllTranslationBtn.disabled = true; // 重置时禁用合并按钮
+    }
+
+    // 批量翻译已选标签
+    async function batchTranslateSelectedTags() {
+        if (selectedTags.size === 0) {
+            showNotification('请先选择需要翻译的标签！', 3000, 'error');
+            return;
+        }
+
+        // 检查是否已加载翻译参考文档，如果没有，则尝试自动加载
+        if (translationReference.size === 0) {
+            showNotification('正在自动加载翻译参考文档...', 3000, 'info');
+            batchTranslateBtn.disabled = true;
+            batchTranslateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 翻译参考加载中...';
+            const loaded = await loadTranslationReferenceData(ALTERNATIVE_TRANSLATION_URL);
+            if (!loaded) {
+                showNotification('自动加载翻译参考文档失败，无法进行批量翻译。', 5000, 'error');
+                batchTranslateBtn.disabled = false;
+                batchTranslateBtn.innerHTML = '<i class="fa-solid fa-language"></i> 批量翻译';
+                return;
+            } else {
+                showNotification('翻译参考文档已自动加载完成。', 3000, 'success');
+            }
+        }
+
+        batchTranslateBtn.disabled = true;
+        batchTranslateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 翻译中...';
+
+        let translatedCount = 0;
+        let failedCount = 0;
+        const tagsToTranslate = Array.from(selectedTags.values()).filter(tag => tag.cnName === '');
+
+        for (const tag of tagsToTranslate) {
+            try {
+                const translatedText = await translateText(tag.name); // 此时 translateText 会优先查 map，再查 API
+                if (translatedText) {
+                    tag.cnName = translatedText;
+                    unsavedEditedTags.add(tag.name);
+                    updateTagDisplay(tag); // 更新UI显示
+                    translatedCount++;
+                } else {
+                    failedCount++;
+                }
+            } catch (error) {
+                console.error(`翻译标签 ${tag.name} 失败:`, error);
+                failedCount++;
+            }
+        }
+
+        updateUnsavedChangesCount();
+        batchTranslateBtn.disabled = false;
+        batchTranslateBtn.innerHTML = '<i class="fa-solid fa-language"></i> 批量翻译';
+        
+        if (translatedCount > 0 && failedCount === 0) {
+            showNotification(`成功翻译 ${translatedCount} 个标签。`, 5000, 'success');
+        } else if (translatedCount > 0 && failedCount > 0) {
+            showNotification(`成功翻译 ${translatedCount} 个标签，${failedCount} 个翻译失败。`, 5000, 'error');
+        } else if (translatedCount === 0 && failedCount > 0) {
+            showNotification(`所有选定标签翻译失败！`, 5000, 'error');
+        } else {
+            showNotification(`没有需要翻译的标签 (所有选定标签已翻译)。`, 5000, 'success');
+        }
+
+        // 如果当前详情页显示的是被翻译的标签，更新其详情
+        if (currentTagInDetail && selectedTags.has(currentTagInDetail.name)) {
+            showTagDetails(currentTagInDetail);
+        }
+    }
+
+    // 批量自定义分类 - 修改为追加功能
+    function batchCustomCategory() {
+        if (selectedTags.size === 0) {
+            showNotification('请先选择需要设置自定义分类的标签！', 3000, 'error');
+            return;
+        }
+
+        const newCustomCategory = batchCustomCategoryInput.value.trim();
+        if (!newCustomCategory) {
+            showNotification('请输入要添加的自定义分类内容。', 3000, 'error');
+            return;
+        }
+
+        let updatedCount = 0;
+        Array.from(selectedTags.values()).forEach(tag => {
+            let currentCategories = tag.customCategory
+                                    .split(',')
+                                    .map(cat => cat.trim())
+                                    .filter(cat => cat !== ''); // 获取当前分类并清理空字符串
+
+            // 检查新分类是否已经存在，不区分大小写
+            const newCategoryLower = newCustomCategory.toLowerCase();
+            const exists = currentCategories.some(cat => cat.toLowerCase() === newCategoryLower);
+
+            if (!exists) {
+                currentCategories.push(newCustomCategory);
+                // 重新组合，确保逗号分隔
+                tag.customCategory = currentCategories.join(', '); 
+                unsavedEditedTags.add(tag.name);
+                updateTagDisplay(tag); // 更新UI显示
+                updatedCount++;
+            }
+        });
+
+        updateUnsavedChangesCount();
+        if (updatedCount > 0) {
+            showNotification(`已为 ${updatedCount} 个标签追加自定义分类: "${newCustomCategory}"`, 5000, 'success');
+        } else {
+            showNotification(`所有选定标签已包含该自定义分类或无需更新。`, 5000, 'info');
+        }
+        
+        // 如果当前详情页显示的是被修改的标签，更新其详情
+        if (currentTagInDetail && selectedTags.has(currentTagInDetail.name)) {
+            showTagDetails(currentTagInDetail);
+        }
+    }
+
+    // 合并翻译参考文档中的中文翻译到主数据
+    function mergeTranslationReferences(mergeType) { // mergeType: 'missing' or 'all'
+        if (translationReference.size === 0) {
+            showNotification('请先加载翻译参考文档！', 3000, 'error');
+            return;
+        }
+        if (allTags.length === 0) {
+            showNotification('请先加载主标签数据！', 3000, 'error');
+            return;
+        }
+
+        let mergedCount = 0;
+        allTags.forEach(tag => {
+            const translatedName = translationReference.get(tag.name) || translationReference.get(tag.name.replace(/_/g, ' '));
+            
+            if (translatedName) {
+                if (mergeType === 'missing') {
+                    // 只合并缺失的翻译
+                    if (tag.cnName === '') {
+                        tag.cnName = translatedName;
+                        unsavedEditedTags.add(tag.name);
+                        updateTagDisplay(tag);
+                        mergedCount++;
+                    }
+                } else if (mergeType === 'all') {
+                    // 强制合并所有翻译
+                    if (tag.cnName !== translatedName) { // 只有在不同时才更新
+                        tag.cnName = translatedName;
+                        unsavedEditedTags.add(tag.name);
+                        updateTagDisplay(tag);
+                        mergedCount++;
+                    }
+                }
+            }
+        });
+        updateUnsavedChangesCount();
+        
+        if (mergedCount > 0) {
+            showNotification(`成功从翻译参考文档合并 ${mergedCount} 个中文翻译！`, 5000, 'success');
+        } else {
+            showNotification('没有新的中文翻译从翻译参考文档中合并。', 5000, 'info');
+        }
+
+        // 如果当前详情页显示的是被合并的标签，更新其详情
+        if (currentTagInDetail) {
+            const updatedTag = allTags.find(t => t.name === currentTagInDetail.name);
+            if (updatedTag) {
+                showTagDetails(updatedTag);
+            }
+        }
+    }
+
+    // 批量添加搜索结果中的标签到已选标签框
+    function batchAddTags() {
+        const currentSearchResults = Array.from(resultsContainer.children)
+            .map(el => el.dataset.tagName)
+            .filter(name => name)
+            .slice(0, 15); // 最多添加15个
+
+        let addedCount = 0;
+        currentSearchResults.forEach(tagName => {
+            if (!selectedTags.has(tagName)) {
+                const tagData = allTags.find(t => t.name === tagName);
+                if (tagData) {
+                    selectedTags.set(tagName, tagData);
+                    const tagItemElement = document.querySelector(`.tag-item[data-tag-name="${tagName}"]`);
+                    if (tagItemElement) tagItemElement.classList.add('opacity-50');
+                    addedCount++;
+                }
+            }
+        });
+        renderSelectedTags();
+        if (addedCount > 0) {
+            showNotification(`已从搜索结果中批量添加 ${addedCount} 个标签。`, 3000, 'success');
+        } else {
+            showNotification('没有新的标签可以批量添加。', 3000, 'info');
+        }
+    }
+
+    // 保存为通配符文件
+    function saveAsWildcard() {
+        if (selectedTags.size === 0) {
+            showNotification('已选标签为空，无法保存为通配符！', 3000, 'error');
+            return;
+        }
+
+        const wildcardContent = Array.from(selectedTags.values())
+            .map(tag => tag.name.replace(/_/g, ' ')) // 将下划线转为空格
+            .join('\n'); // 每个标签一行
+
+        const blob = new Blob([wildcardContent], { type: 'text/plain;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `selected_tags_wildcard_${new Date().toISOString().slice(0, 10)}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+
+        showNotification('已成功保存为通配符文件！');
+    }
+
+    // 显示创建新标签模态框
+    function showNewTagModal() {
+        // 清空所有字段
+        newTagNameInput.value = '';
+        newTagCnNameInput.value = '';
+        newTagAliasesInput.value = '';
+        newTagCategorySelect.value = '0'; // 默认通用
+        newTagCountInput.value = '0';
+        newTagCustomCategoryInput.value = '';
+        newTagModal.classList.remove('hidden');
+    }
+
+    // 隐藏创建新标签模态框
+    function hideNewTagModal() {
+        newTagModal.classList.add('hidden');
+    }
+
+    // 保存新标签
+    function saveNewTag() {
+        const name = newTagNameInput.value.trim();
+        if (!name) {
+            showNotification('英文名不能为空！', 3000, 'error');
+            return;
+        }
+        if (allTags.some(tag => tag.name === name)) {
+            showNotification('该英文名已存在，请修改！', 3000, 'error');
+            return;
+        }
+
+        const newTag = {
+            name: name,
+            cnName: newTagCnNameInput.value.trim(),
+            aliases: newTagAliasesInput.value.trim(),
+            category: parseInt(newTagCategorySelect.value, 10),
+            count: parseInt(newTagCountInput.value, 10) || 0,
+            customCategory: newTagCustomCategoryInput.value.trim()
+        };
+
+        allTags.push(newTag);
+        unsavedEditedTags.add(newTag.name); // 标记为未保存
+        updateUnsavedChangesCount();
+        handleSearch(); // 刷新搜索结果以显示新标签
+        renderStats(); // 更新统计
+        showNotification(`新标签 "${newTag.name}" 已创建并添加到数据集。`);
+        hideNewTagModal();
+        showTagDetails(newTag); // 显示新标签的详情
+        renderImageGallery(newTag.name); // 更新图鉴为新标签
+    }
+
+    // 显示全屏图片查看器
+    function showFullscreenImage(initialIndex = 0) {
+        if (currentGalleryImages.length === 0) {
+            showNotification('无图片可供放大查看。', 3000, 'info');
+            return;
+        }
+        // 确保 initialIndex 在有效范围内
+        currentImageIndex = Math.max(0, Math.min(initialIndex, currentGalleryImages.length - 1));
+        updateFullscreenImage();
+        fullscreenImageViewer.classList.remove('hidden'); // 先移除 hidden
+        fullscreenImageViewer.classList.add('show');
+    }
+
+    // 隐藏全屏图片查看器
+    function hideFullscreenImage() {
+        fullscreenImageViewer.classList.remove('show');
+        // 等待过渡完成后再添加 hidden，防止闪烁
+        setTimeout(() => {
+            fullscreenImageViewer.classList.add('hidden');
+            fullscreenImage.src = ''; // 清空图片，防止下次打开时旧图片闪烁
+        }, 300); 
+    }
+
+    // 更新全屏图片显示
+    function updateFullscreenImage() {
+        if (currentGalleryImages.length === 0) {
+            fullscreenImage.src = '';
+            imageCounter.textContent = '0/0';
+            return;
+        }
+        const imageUrl = currentGalleryImages[currentImageIndex];
+        fullscreenImage.src = imageUrl;
+        imageCounter.textContent = `${currentImageIndex + 1}/${currentGalleryImages.length}`;
+    }
+
+    // 切换到上一张图片
+    function showPrevImage() {
+        if (currentGalleryImages.length === 0) return;
+        currentImageIndex = (currentImageIndex - 1 + currentGalleryImages.length) % currentGalleryImages.length;
+        updateFullscreenImage();
+    }
+
+    // 切换到下一张图片
+    function showNextImage() {
+        if (currentGalleryImages.length === 0) return;
+        currentImageIndex = (currentImageIndex + 1) % currentGalleryImages.length;
+        updateFullscreenImage();
+    }
+
+
+    // --- 事件监听器 ---
+    loadUrlBtn.addEventListener('click', () => {
+        const url = urlInput.value.trim();
+        if (url) loadData(url);
+        else showNotification('请输入一个有效的CSV文件网络地址！', 3000, 'error');
+    });
+
+    defaultUrlBtn1.addEventListener('click', () => urlInput.value = DANBOORU_CSV_URL); 
+    defaultUrlBtn2.addEventListener('click', () => urlInput.value = ALTERNATIVE_CSV_URL_2); 
+
+    loadLocalBtn.addEventListener('click', () => localFileInput.click());
+    localFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) loadData(e.target.files[0]);
+    });
+    reloadBtn.addEventListener('click', resetState);
+    saveDataBtn.addEventListener('click', saveDataAsCsv); 
+
+    searchInput.addEventListener('input', handleSearchInput);
+    resetSearchBtn.addEventListener('click', () => { 
+        searchInput.value = '';
+        handleSearch();
+    });
+
+    categoryFilters.addEventListener('click', e => {
+        const button = e.target.closest('.filter-btn');
+        if (button) {
+            currentFilter = button.dataset.category;
+            categoryFilters.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('btn-active'));
+            button.classList.add('btn-active');
+            handleSearch();
+            renderPopularTags();
+            renderStats();
+        }
+    });
+    
+    sortButtons.addEventListener('click', e => {
+        const button = e.target.closest('.sort-btn');
+        if (button) {
+            currentSort = button.dataset.sort;
+            sortButtons.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('btn-active'));
+            button.classList.add('btn-active');
+            handleSearch();
+        }
+    });
+    
+    limitButtons.addEventListener('click', e => {
+        const button = e.target.closest('.limit-btn');
+        if (button) {
+            displayLimit = parseInt(button.dataset.limit, 10);
+            limitButtons.querySelectorAll('.limit-btn').forEach(btn => btn.classList.remove('btn-active'));
+            button.classList.add('btn-active');
+            handleSearch();
+            renderPopularTags();
+        }
+    });
+    
+    // Tab 切换逻辑
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active-tab');
+            });
+            button.classList.add('active-tab');
+
+            searchResultsPanel.style.display = (button.dataset.panel === 'search') ? 'block' : 'none';
+            popularTagsPanel.style.display = (button.dataset.panel === 'popular') ? 'block' : 'none';
+        });
+    });
+
+    copyPromptBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(promptOutput.value).then(() => {
+            showNotification('已成功复制提示词！'); // 使用统一的提示框
+        }).catch(err => {
+            console.error('复制失败:', err);
+            showNotification('复制失败，请手动复制。', 3000, 'error');
+        });
+    });
+
+    clearSelectedBtn.addEventListener('click', () => {
+        selectedTags.clear();
+        renderSelectedTags();
+        document.querySelectorAll('.tag-item.opacity-50').forEach(el => el.classList.remove('opacity-50'));
+        showTagDetails(null); 
+        renderImageGallery(null); // 清空已选标签时清空图鉴
+        showNotification('已清空所有已选标签。', 3000);
+    });
+
+    promptFormatters.addEventListener('click', e => {
+        const button = e.target.closest('button');
+        if(button) updatePrompt(button.dataset.format);
+    });
+
+    // 标签项 (左侧面板) 和已选标签 (中间面板) 的委托点击处理程序
+    document.getElementById('main-content').addEventListener('click', handleTagInteraction);
+
+    // 单个标签翻译按钮事件监听器
+    translateDetailButton.addEventListener('click', async () => {
+        const tagNameForTranslate = translateDetailButton.dataset.tagName;
+        const tagToTranslate = allTags.find(t => t.name === tagNameForTranslate);
+        if (!tagToTranslate) return;
+
+        // 检查是否已加载翻译参考文档，如果没有，则尝试自动加载
+        if (translationReference.size === 0) {
+            showNotification('正在自动加载翻译参考文档...', 3000, 'info');
+            translateDetailButton.disabled = true;
+            translateDetailButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 翻译参考加载中...';
+            const loaded = await loadTranslationReferenceData(ALTERNATIVE_TRANSLATION_URL);
+            if (!loaded) {
+                showNotification('自动加载翻译参考文档失败，无法进行翻译。', 5000, 'error');
+                translateDetailButton.disabled = false;
+                translateDetailButton.innerHTML = '<i class="fa-solid fa-language"></i> 翻译';
+                return;
+            } else {
+                showNotification('翻译参考文档已自动加载完成。', 3000, 'success');
+            }
+        }
+
+        translateDetailButton.disabled = true;
+        translateDetailButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 翻译中...'; 
+
+        const translatedText = await translateText(tagToTranslate.name); // 此时 translateText 会优先查 map，再查 API
+        if (translatedText) {
+            tagToTranslate.cnName = translatedText;
+            const cnNameField = tagDetailContent.querySelector('[data-field="cnName"]');
+            if (cnNameField) cnNameField.textContent = translatedText;
+            unsavedEditedTags.add(tagNameForTranslate);
+            updateUnsavedChangesCount();
+            updateTagDisplay(tagToTranslate);
+            translateDetailButton.style.display = 'none'; 
+            showNotification(`标签 "${tagToTranslate.name}" 已翻译。`, 3000);
+        } else {
+            showNotification(`标签 "${tagToTranslate.name}" 翻译失败。`, 3000, 'error');
+        }
+        translateDetailButton.disabled = false;
+        translateDetailButton.innerHTML = '<i class="fa-solid fa-language"></i> 翻译'; 
+    });
+
+    // 批量翻译按钮事件监听器
+    batchTranslateBtn.addEventListener('click', batchTranslateSelectedTags);
+
+    // 批量自定义分类按钮事件监听器
+    batchCustomCategoryBtn.addEventListener('click', batchCustomCategory);
+
+    // 批量添加按钮事件监听器
+    batchAddBtn.addEventListener('click', batchAddTags);
+
+    // 保存为通配符按钮事件监听器
+    saveWildcardBtn.addEventListener('click', saveAsWildcard);
+
+    // 创建新标签按钮事件监听器
+    createNewTagBtn.addEventListener('click', showNewTagModal);
+    saveNewTagBtn.addEventListener('click', saveNewTag);
+    cancelNewTagBtn.addEventListener('click', hideNewTagModal);
+
+
+    // 翻译参考文档事件监听器
+    loadTranslationUrlBtn.addEventListener('click', () => {
+        const url = translationUrlInput.value.trim();
+        if (url) loadTranslationReferenceData(url);
+        else showNotification('请输入一个有效的翻译参考CSV文件网络地址！', 3000, 'error');
+    });
+
+    defaultTranslationUrlBtn.addEventListener('click', () => { // 新增备选翻译URL按钮事件
+        translationUrlInput.value = ALTERNATIVE_TRANSLATION_URL;
+    });
+
+    loadLocalTranslationBtn.addEventListener('click', () => localTranslationFileInput.click());
+    localTranslationFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) loadTranslationReferenceData(e.target.files[0]);
+    });
+
+    // 合并缺失翻译按钮事件监听器
+    mergeMissingTranslationBtn.addEventListener('click', () => mergeTranslationReferences('missing'));
+
+    // 合并全部翻译按钮事件监听器
+    mergeAllTranslationBtn.addEventListener('click', () => mergeTranslationReferences('all'));
+
+    // 图片画廊点击事件监听器（委托给父容器）
+    tagImageGallery.addEventListener('click', (e) => {
+        const wrapper = e.target.closest('.gallery-image-wrapper');
+        if (wrapper && wrapper.dataset.imageUrl) {
+            const imageUrl = wrapper.dataset.imageUrl;
+            const index = currentGalleryImages.indexOf(imageUrl);
+            if (index !== -1) {
+                showFullscreenImage(index);
+            }
+        }
+    });
+
+    // 全屏图片查看器点击事件监听器
+    fullscreenImageViewer.addEventListener('click', (e) => {
+        // 如果点击的不是图片本身也不是箭头，则隐藏
+        if (e.target === fullscreenImageViewer || e.target === fullscreenImage) {
+            hideFullscreenImage();
+        }
+    });
+
+    // 阻止图片上的点击事件冒泡到父容器（避免点击图片导致隐藏）
+    fullscreenImage.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+
+    prevImageBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // 阻止事件冒泡到父容器
+        showPrevImage();
+    });
+
+    nextImageBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // 阻止事件冒泡到父容器
+        showNextImage();
+    });
+
+    // 键盘事件监听器 (ESC 键关闭，左右箭头切换)
+    document.addEventListener('keydown', (e) => {
+        if (fullscreenImageViewer.classList.contains('show')) {
+            if (e.key === 'Escape') {
+                hideFullscreenImage();
+            } else if (e.key === 'ArrowLeft') {
+                showPrevImage();
+            } else if (e.key === 'ArrowRight') {
+                showNextImage();
+            }
+        }
+    });
+});
+</script>
+
+</body>
+</html>
