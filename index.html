@@ -546,9 +546,9 @@
                 <div class="w-full mx-auto flex items-center gap-2 max-w-screen-xl px-4 md:px-0"> 
                     <input type="text" id="url-input" placeholder="输入CSV文件网络地址"
                         class="flex-grow py-2 pl-3 pr-4 borderless-input focus:outline-none focus:ring-2 focus:ring-blue-400 transition"> 
-                    <button id="default-url-btn-1" class="custom-button shadow-sm" title="使用备选Danbooru CSV URL 1"> 备选 1
+                    <button id="default-url-btn-1" class="custom-button shadow-sm" title="使用备选Danbooru CSV URL 1"> 备选 URL 1
                     </button>
-                    <button id="default-url-btn-2" class="custom-button shadow-sm" title="使用备选Danbooru CSV URL 2"> 备选 2
+                    <button id="default-url-btn-2" class="custom-button shadow-sm" title="使用备选Danbooru CSV URL 2"> 备选 URL 2
                     </button>
                 </div>
                 <div class="flex justify-center gap-4 w-full max-w-md">
@@ -634,7 +634,7 @@
                                 <button class="custom-button shadow" id="create-new-tag-btn" title="创建一个新标签">
                                     <i class="fa-solid fa-plus"></i> 创建新标签
                                 </button>
-                                <button class="custom-button shadow" id="translate-detail-button" style="display: none;" title="翻译此标签">
+                                <button class="custom-button shadow bg-[#3b82f6] text-white" id="translate-detail-button" style="display: none;" title="翻译此标签">
                                     <i class="fa-solid fa-language"></i> 翻译
                                 </button>
                             </div>
@@ -682,7 +682,7 @@
                         <div class="w-full flex items-center gap-2">
                             <input type="text" id="translation-url-input" placeholder="输入翻译参考CSV文件网络地址"
                                 class="flex-grow py-2 pl-3 pr-4 borderless-input focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
-                            <button id="default-translation-url-btn" class="custom-button shadow-sm" title="使用备选翻译参考URL">备选URL</button>
+                            <button id="default-translation-url-btn" class="custom-button shadow-sm" title="使用备选翻译参考URL">备选 URL</button>
                         </div>
                         <div class="flex justify-center gap-4 w-full">
                             <button id="load-translation-url-btn" class="flex-1 custom-button shadow" title="从指定URL加载翻译参考">
@@ -708,7 +708,7 @@
         </main>
 
         <div id="new-tag-modal" class="modal-overlay hidden">
-            <div class="modal-content">
+            <div class="modal-content text-sm">
                 <h3 class="text-xl font-bold mb-4">创建新标签</h3>
                 <div class="tag-detail-row">
                     <strong>英文名:</strong> <input type="text" id="new-tag-name" placeholder="必填" class="custom-input">
