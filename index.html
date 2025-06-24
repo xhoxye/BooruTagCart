@@ -644,11 +644,11 @@
                         <div class="flex justify-between items-center mb-3">
                             <h3 class="font-bold text-[#5f5c5c]"><i class="fa-solid fa-circle-info text-[#5f5c5c]"></i> 标签详情 (<span id="unsaved-tag-edits">0</span> 个未保存)</h3>
                             <div class="flex gap-2">
-                                <button class="custom-button shadow" id="create-new-tag-btn" title="创建一个新标签">
-                                    <i class="fa-solid fa-plus"></i> 创建新标签
-                                </button>
                                 <button class="custom-button shadow bg-[#3b82f6] text-white" id="translate-detail-button" style="display: none;" title="翻译此标签">
                                     <i class="fa-solid fa-language"></i> 翻译
+                                </button>
+                                <button class="custom-button shadow" id="create-new-tag-btn" title="创建一个新标签">
+                                    <i class="fa-solid fa-plus"></i> 创建新标签
                                 </button>
                             </div>
                         </div>
@@ -1430,6 +1430,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateUnsavedChangesCount() {
         unsavedChangesCount.textContent = unsavedEditedTags.size;
         unsavedTagEditsSpan.textContent = unsavedEditedTags.size;
+        const saveBtn = document.getElementById('save-data-btn');
+        if (unsavedEditedTags.size > 0) {
+            saveBtn.style.backgroundColor = '#3B82F6';
+            saveBtn.style.color = 'white';
+        } else {
+            saveBtn.style.backgroundColor = '';
+            saveBtn.style.color = '';
+        }
     }
 
     // 更新标签显示
