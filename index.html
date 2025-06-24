@@ -733,7 +733,7 @@
                     </select>
                 </div>
                 <div class="tag-detail-row">
-                    <strong>帖子数量:</strong> <input type="number" id="new-tag-count" value="0" min="0" class="custom-input">
+                    <strong>热度:</strong> <input type="number" id="new-tag-count" value="520" min="0" class="custom-input">
                 </div>
                 <div class="tag-detail-row">
                     <strong>自定义分类:</strong> <input type="text" id="new-tag-custom-category" class="custom-input">
@@ -1933,7 +1933,7 @@ document.addEventListener('DOMContentLoaded', () => {
         newTagCnNameInput.value = '';
         newTagAliasesInput.value = '';
         newTagCategorySelect.value = '0'; // 默认通用
-        newTagCountInput.value = '0';
+        newTagCountInput.value = '9999999';
         newTagCustomCategoryInput.value = '';
         newTagModal.classList.remove('hidden');
     }
