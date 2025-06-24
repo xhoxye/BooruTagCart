@@ -77,8 +77,8 @@
         }
 
         .custom-input {
-            background-color: #e9e9e9;
-            color: #757575;
+            background-color: #181A1F; /*背景色*/
+            color: #58df8a; /*字体颜色，目前只用在生成提示词的文本框，之前是 #757575 */
             border: 1px solid #d1d5db;
             border-radius: 0.5rem; /*统一圆角*/
         }
@@ -174,7 +174,7 @@
         }
 
         .editable-field {
-            background-color: #f0f0f0;
+            background-color: #D9EBF9; /* 可编辑框的背景色 */
             padding: 4px 6px; /* 减小内边距 */
             min-height: 24px; /* 确保最小高度以便交互 */
             border-radius: 3px;
@@ -541,10 +541,9 @@
                 </div>
             </div>
         </nav>
-
         <div id="loader-section" class="text-center p-8">
             <h2 class="text-2xl font-semibold mb-4 text-[#5f5c5c]">加载标签数据</h2>
-            <p class="text-gray-500 mb-6">请选择数据源。</p>
+            <p class="text-gray-500 mb-6">请选择数据源。</p>   
             <div class="flex flex-col items-center gap-4 mb-6">
                 <div class="w-full mx-auto flex items-center gap-2 max-w-screen-xl px-4 md:px-0"> 
                     <input type="text" id="url-input" placeholder="输入CSV文件网络地址"
@@ -563,11 +562,22 @@
                     </button>
                     <input type="file" id="local-file-input" class="hidden" accept=".csv">
                 </div>
-            </div>
-
+            </div>   
             <div id="progress-container" class="mt-6 hidden">
                 <div class="w-full bg-gray-200 rounded-full h-2.5"><div id="progress-bar" class="bg-blue-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div></div>
                 <p id="progress-text" class="text-sm text-gray-500 mt-2"></p>
+            </div>
+            <div class="flex flex-col items-center gap-4 mb-6">    
+            <p class="text-gray-500 mb-6 text-left text-sm">
+                文件格式要求：<br>
+                - CSV格式，至少有前面3列：<英语标签>,<类别>,<热度>,<别名>,<翻译>,<分类><br>
+                - 别名行，多个别名需用引号包裹<br>
+                - 类别编号：0=通用,1=艺术家,3=版权,4=角色,5=元数据<br><br>
+                本工具帮助高效管理Danbooru标签，用于AI图像生成。<br>
+                数据来自Danbooru并持续更新，完全在浏览器中运行。<br>
+                本工具为静态网页+JS脚本+CSV数据文件，不依赖任何后端服务。<br>
+                可下载到本地使用，打造专属标签库。<br>
+            </p>
             </div>
         </div>
 
@@ -680,7 +690,7 @@
                 </div>
 
                 <div class="p-4 section-divider-shadow">
-                    <h3 class="font-bold mb-3 text-[#5f5c5c]"><i class="fa-solid fa-book-open text-[#5f5c5c]"></i> 翻译参考文档</h3>
+                    <h3 class="font-bold mb-3 text-[#5f5c5c]"><i class="fa-solid fa-book-open text-[#5f5c5c]"></i> 翻译参考文档（CSV格式，两列：英文标签,翻译）</h3>
                     <div class="flex flex-col items-center gap-4">
                         <div class="w-full flex items-center gap-2">
                             <input type="text" id="translation-url-input" placeholder="输入翻译参考CSV文件网络地址"
@@ -724,7 +734,7 @@
                 </div>
                 <div class="tag-detail-row">
                     <strong>类别:</strong> 
-                    <select id="new-tag-category" class="custom-input">
+                    <select id="new-tag-category" class="custom-input text-[#757575]">
                         <option value="0">通用 (General)</option>
                         <option value="1">艺术家 (Artist)</option>
                         <option value="3">版权 (Copyright)</option>
@@ -733,7 +743,7 @@
                     </select>
                 </div>
                 <div class="tag-detail-row">
-                    <strong>热度:</strong> <input type="number" id="new-tag-count" value="520" min="0" class="custom-input">
+                    <strong>热度:</strong> <input type="number" id="new-tag-count" value="520" min="0" class="custom-input text-[#757575]">
                 </div>
                 <div class="tag-detail-row">
                     <strong>自定义分类:</strong> <input type="text" id="new-tag-custom-category" class="custom-input">
