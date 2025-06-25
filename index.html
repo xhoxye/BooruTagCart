@@ -1712,6 +1712,8 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedTags.clear();
         unsavedEditedTags.clear(); 
         updateUnsavedChangesCount();
+        currentFilter = 'all'; // 重置当前类别过滤器为 'all'
+        currentSort = 'heat_desc'; // 重置当前排序为 'heat_desc'
         
         searchInput.disabled = true;
         searchInput.value = '';
