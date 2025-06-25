@@ -591,7 +591,8 @@
                 本工具为静态网页+JS脚本+CSV数据文件，不依赖任何后端服务。<br>
                 可下载到本地使用，打造专属标签库。<br><br>
                 Tags 数据集的默认链接和翻译使用的是 github 和 google，如果不想联网，可以事先下载。<br><br>
-                <a href="https://pan.baidu.com/s/1T7WzVhwnAkcGY-3oWP50VQ?pwd=xhox" target="_blank"><i class="fa-solid fa-download text-xl text-[#3b82f6]"></i> 备用网盘下载地址</a><br>
+                <a href="https://pan.baidu.com/s/1T7WzVhwnAkcGY-3oWP50VQ?pwd=xhox" target="_blank"><i class="fa-solid fa-download text-xl text-[#3b82f6]"></i> 备用网盘下载地址</a><br><br>
+                <i class="fas fa-history" aria-hidden="true"></i> 更新日志 - 2025.06.26，为“重新加载”按钮新增确认警告框，有效防止用户误操作。
             </p>
             </div>
         </div>
@@ -2076,7 +2077,15 @@ document.addEventListener('DOMContentLoaded', () => {
     localFileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) loadData(e.target.files[0]);
     });
-    reloadBtn.addEventListener('click', resetState);
+
+    //重新加载按钮事件监听器
+    reloadBtn.addEventListener('click', () => {
+        // 增加一个再次确认的警告框
+        if (confirm('确定要重置所有数据和状态吗？这会清除所有未保存的更改并清空所有数据！')) {
+            resetState(); 
+        }
+    }); 
+
     saveDataBtn.addEventListener('click', saveDataAsCsv); 
 
     searchInput.addEventListener('input', handleSearchInput);
