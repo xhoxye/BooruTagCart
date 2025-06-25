@@ -556,14 +556,14 @@
         </nav>
         <div id="loader-section" class="text-center p-8">
             <h2 class="text-2xl font-semibold mb-4 text-[#5f5c5c]">加载标签数据</h2>
-            <p class="text-gray-500 mb-6">请选择数据源。</p>   
+            <p class="text-gray-500 mb-6">请选择数据来源，网络 CSV 文件，或是本地 CSV 文件。</p>   
             <div class="flex flex-col items-center gap-4 mb-6">
                 <div class="w-full mx-auto flex items-center gap-2 max-w-screen-xl px-4 md:px-0"> 
                     <input type="text" id="url-input" placeholder="输入CSV文件网络地址"
                         class="flex-grow py-2 pl-3 pr-4 borderless-input focus:outline-none focus:ring-2 focus:ring-blue-400 transition"> 
-                    <button id="default-url-btn-1" class="custom-button shadow-sm" title="使用备选Danbooru CSV URL 1"> 备选 URL 1
+                    <button id="default-url-btn-1" class="custom-button shadow-sm" title="使用备选Danbooru CSV URL 1"> 默认 URL
                     </button>
-                    <button id="default-url-btn-2" class="custom-button shadow-sm" title="使用备选Danbooru CSV URL 2"> 备选 URL 2
+                    <button id="default-url-btn-2" class="custom-button shadow-sm" title="使用备选Danbooru CSV URL 2"> 备选 URL
                     </button>
                 </div>
                 <div class="flex justify-center gap-4 w-full max-w-md">
@@ -589,7 +589,9 @@
                 本工具帮助高效管理Danbooru标签，用于AI图像生成。<br>
                 数据来自Danbooru并持续更新，完全在浏览器中运行。<br>
                 本工具为静态网页+JS脚本+CSV数据文件，不依赖任何后端服务。<br>
-                可下载到本地使用，打造专属标签库。<br>
+                可下载到本地使用，打造专属标签库。<br><br>
+                Tags 数据集的默认链接和翻译使用的是 github 和 google，如果不想联网，可以事先下载。<br><br>
+                <a href="https://pan.baidu.com/s/1T7WzVhwnAkcGY-3oWP50VQ?pwd=xhox" target="_blank"><i class="fa-solid fa-download text-xl text-[#3b82f6]"></i> 备用网盘下载地址</a><br>
             </p>
             </div>
         </div>
@@ -777,8 +779,10 @@
         
         <footer class="mt-8 text-center text-gray-500 text-sm">
             <p>&copy; 2025 / <a href="https://xhoxye.github.io/BooruTagCart/" target="_blank">小河的 Danbooru 标签助手 / BooruTagCart / v 1.0.5 / by xhox</a> 
-            <a href="https://space.bilibili.com/14701583" target="_blank" class="ml-2 text-xl" style="color:#3B82F6"><i class="fab fa-bilibili"></i></a>
-            <a href="https://github.com/xhoxye/BooruTagCart" target="_blank" class="ml-2 text-xl" style="color:#3B82F6"><i class="fab fa-github"></i></a></p>
+            <a href="https://space.bilibili.com/14701583" target="_blank" class="ml-2 text-xl" style="color:#3B82F6"><i class="fab fa-bilibili"></i></a> 
+            <a href="https://github.com/xhoxye/BooruTagCart" target="_blank" class="ml-2 text-xl" style="color:#3B82F6"><i class="fab fa-github"></i></a> 
+            <a href="https://pan.baidu.com/s/1T7WzVhwnAkcGY-3oWP50VQ?pwd=xhox" target="_blank" class="ml-2 text-xl" style="color:#3B82F6"><i class="fa-solid fa-download text-xl text-[#3b82f6]"></i></a>
+            </p>
         </footer>
     </div>
 
@@ -1348,7 +1352,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentGalleryImages = []; // 清空当前图库图片
 
         if (!tagName) {
-            tagImageGallery.innerHTML = `<div class="gallery-image-wrapper"><img src="images/xhox_welcome.webp" alt="Welcome Image"></div>
+            tagImageGallery.innerHTML = `<div class="gallery-image-wrapper"><img src="assets/welcome1.webp" alt="Welcome Image"></div>
                                         <div class="gallery-placeholder">请选择标签以查看图鉴</div>`;
             return;
         }
@@ -1608,9 +1612,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 如果点击的是同一个标签，则不刷新详情和图鉴
-        if (currentTagInDetail?.name === tag.name) {
-            return; 
-        }
+        // if (currentTagInDetail?.name === tag.name) {
+        //     return; 
+        //}
 
         currentTagInDetail = tag;
 

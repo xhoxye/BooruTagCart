@@ -20,7 +20,7 @@
 
 ## 界面截图
 
-<img src="images/Screenshots1.png" alt="img" style="zoom:100%;" width="90%"  />
+<img src="assets/Screenshots1.png" alt="img" style="zoom:100%;" width="90%"  />
 
 ## 🌟 核心功能
 
