@@ -626,7 +626,7 @@
             <section class="md:col-span-2 flex flex-col gap-4"> 
                 <div class="p-4 section-divider-shadow">
                     <div class="flex justify-between items-center mb-3">
-                        <h3 class="font-bold text-[#5f5c5c]"><i class="fa-solid fa-check-square text-[#5f5c5c]"></i> 已选标签 (<span id="selected-count">0</span>)</h3>
+                        <h3 class="font-bold text-[#5f5c5c]"><i class="fa-solid fa-check-square" style="color:#22C55E"></i> 已选标签 (<span id="selected-count">0</span>)</h3>
                         <div class="flex gap-2">
                             <button id="clear-selected-btn" class="custom-button shadow" title="清空所有已选标签">
                                 <i class="fa-solid fa-eraser"></i> 清空
@@ -1196,7 +1196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let filterHtml = `<button data-category="all" class="filter-btn btn-active custom-button-small" title="显示所有类别">全部</button>`;
         for (const id in CATEGORIES) {
             const cat = CATEGORIES[id];
-            filterHtml += `<button data-category="${id}" class="filter-btn custom-button-small" style="--tw-shadow-color: ${cat.light}; box-shadow: 0 0 0 0px ${cat.light}; hover:bg- ${cat.dark};" title="显示${cat.name}类别">${cat.name}</button>`;
+            filterHtml += `<button data-category="${id}" class="filter-btn custom-button-small hover:bg-[${cat.dark}] hover:text-white" style="--tw-shadow-color: ${cat.light}; box-shadow: 0 0 0 2px ${cat.light}; " title="显示${cat.name}类别">${cat.name}</button>`;
         }
         categoryFilters.innerHTML = filterHtml;
 
