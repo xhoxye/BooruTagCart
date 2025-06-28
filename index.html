@@ -29,17 +29,17 @@
 
         /* 搜索结果/热门标签面板的滚动条保持隐藏 */
         #search-results-panel, #popular-tags-panel {
-            scrollbar-width: 无; /* Firefox */
-            -ms-overflow-style: 无;  /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
         }
         /* 隐藏 Webkit 浏览器（Chrome, Safari）的特定滚动条 */
         #search-results-panel::-webkit-scrollbar, #popular-tags-panel::-webkit-scrollbar {
-            display: 无;
+            display: none;
         }
 
 
         /* 标签项和已选标签的过渡效果 */
-        .tag-item, .selected-tag-item { transition: 全部 0.2s ease-in-out; }
+        .tag-item, .selected-tag-item { transition: all 0.2s ease-in-out; }
         /* 标签项和已选标签的悬停效果 */
         .tag-item:hover, .selected-tag-item:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         
@@ -60,7 +60,7 @@
             align-items: center;
             gap: 0.5rem; /* 图标与文本间距 */
             padding: 0.5rem 1rem; /* 统一内边距 */
-            white-space: 现在rap; /* 防止文本换行 */
+            white-space: nowrap; /* 防止文本换行 */
         }
         .custom-button:hover {
             background-color: #b9b9b9;
