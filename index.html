@@ -1551,7 +1551,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(handleSearch, 300); 
+        searchTimeout = setTimeout(handleSearch, 300);  //搜索输入刷新结果延迟，防抖动
     }
 
     // 处理搜索
@@ -1605,6 +1605,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderImageGallery(null); // 如果移除的是当前详情标签，清空图鉴
             }
         }
+    }
+
+    // 新增：处理鼠标悬停刷新标签详情事件，该函数监听 'main-content' 区域内的悬停事件，根据悬停的具体元素执行不同操作
+    function mouseoverTagInteraction(e) {
+        // 尝试从悬停事件的目标元素（e.target）向上查找最近的 '.tag-item' 元素
+        // '.tag-item' 通常代表左侧搜索结果列表中的一个标签项
+        const tagItem = e.target.closest('.tag-item');
+        // 尝试从悬停事件的目标元素向上查找最近的 '.selected-tag-item' 元素
+        // '.selected-tag-item' 通常代表中间已选标签列表中的一个标签项
+        const selectedTagItem = e.target.closest('.selected-tag-item');
+        
+        let targetData = null; // 用于存储最终要显示的标签数据
+
+        // --- 处理悬停左侧面板的标签项 (tagItem) ---
+        if (tagItem) {
+            // 从找到的 tagItem 元素的 HTML 数据属性中获取标签名称（通常是英文名）
+            const tagName = tagItem.dataset.tagName;
+            // 在全局的 allTags 数组（假设其包含所有标签的详细数据）中查找匹配 tagName 的标签数据对象
+            targetData = allTags.find(t => t.name === tagName);
+
+            // 检查悬停的区域是否是标签项内部的“仅详情”区域
+            const clickedDetailsOnlyArea = e.target.closest('[data-action="details-only"]');
+            
+            // 如果悬停的是标记为“仅详情”的区域，或者悬停的是标签项的其他部分
+            // 只要找到标签数据且与当前详情不同，就准备显示
+            if (targetData && currentTagInDetail?.name !== targetData.name) {
+                 // 统一在外部调用处理标签详情和图鉴的刷新
+            } else {
+                // 如果是同一个标签，或者没有找到数据，则不更新 targetData，外部不会触发刷新
+                targetData = null; 
+            }
+        } 
+        // --- 新增：处理悬停中间面板的已选标签项 (selectedTagItem) ---
+        else if (selectedTagItem) {
+            // 从找到的 selectedTagItem 元素的 HTML 数据属性中获取标签名称
+            const tagName = selectedTagItem.dataset.tagName;
+            // 从 allTags 中查找对应的完整标签数据对象
+            targetData = allTags.find(t => t.name === tagName);
+
+            // 检查当前悬停的标签是否与详情面板中正在显示的标签不同
+            if (targetData && currentTagInDetail?.name !== targetData.name) {
+                 // 统一在外部调用处理标签详情和图鉴的刷新
+            } else {
+                // 如果是同一个标签，或者没有找到数据，则不更新 targetData，外部不会触发刷新
+                targetData = null;
+            }
+        }
+
+        // 统一处理标签详情和图鉴的刷新
+        if (targetData) {
+            showTagDetails(targetData);
+            renderImageGallery(targetData.name); // 悬停时更新图鉴
+        }
+        // 如果 targetData 为 null (例如鼠标悬停在非标签区域)，则不作任何处理，保持当前详情不变
     }
 
     // 显示标签详情
@@ -2170,6 +2224,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 标签项 (左侧面板) 和已选标签 (中间面板) 的委托点击处理程序
     document.getElementById('main-content').addEventListener('click', handleTagInteraction);
+
+
+    // 新增：对 main-content 的鼠标悬停延迟触发刷新标签详情的功能
+    let hoverTimeout = null;
+    const HOVER_DELAY = 400; // 鼠标悬停延迟时间 (毫秒)，防抖动
+
+    document.getElementById('main-content').addEventListener('mouseover', (e) => {
+        // 清除任何之前的延迟，以防鼠标快速进出元素区域或在不同子元素间移动
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+        }
+        
+        // 只有当鼠标进入一个新的 tag-item 或 selected-tag-item 时才设置新的延迟
+        // 避免在同一个标签内部移动时频繁重置
+        const tagItem = e.target.closest('.tag-item');
+        const selectedTagItem = e.target.closest('.selected-tag-item');
+        
+        if (tagItem || selectedTagItem) { // 只有在悬停到具体标签上时才启动计时器
+            hoverTimeout = setTimeout(() => {
+                // 延迟结束后，调用实际处理函数
+                mouseoverTagInteraction(e);
+            }, HOVER_DELAY);
+        }
+    });
+
+    document.getElementById('main-content').addEventListener('mouseout', (e) => {
+        // 鼠标离开时清除延迟，防止在鼠标离开后不必要的触发
+        // 更重要的是，需要判断鼠标是否真的离开了当前标签，而不是进入了它的子元素
+        // 或者移动到了另一个同级标签
+        // relatedTarget 是鼠标移入的那个元素
+        const relatedTarget = e.relatedTarget;
+        const currentTarget = e.currentTarget; // currentTarget 是事件监听器绑定的元素，即 main-content
+
+        // 检查鼠标是否离开了 main-content 区域，或者移动到了 main-content 之外的区域
+        // 如果 relatedTarget 不在 currentTarget 内部 (即离开了 main-content)，则清除计时器
+        if (!relatedTarget || !currentTarget.contains(relatedTarget)) {
+            if (hoverTimeout) {
+                clearTimeout(hoverTimeout);
+                hoverTimeout = null;
+            }
+        }
+        // 注意：这里仍然存在一个挑战，如果鼠标从一个tag-item直接移动到另一个tag-item，
+        // mouseout会在第一个tag-item上冒泡到main-content，并触发这里的mouseout，
+        // 导致计时器被清除。然后新的tag-item会触发mouseover。
+        // 这就是 mouseover/mouseout 委托比 mouseenter/mouseleave 委托复杂的原因。
+    });
 
     // 单个标签翻译按钮事件监听器
     translateDetailButton.addEventListener('click', async () => {
