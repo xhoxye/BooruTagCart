@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danbooru 标签助手</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+
+    <style>
+        /* 注入自定义样式和颜色变量 */
+        :root {
+            /* Light Mode Colors */
+            --bg-color-light: #f7f7f7;
+            --text-color-light: #5f5c5c;
+            --icon-color-light: #5f5c5c;
+            --input-bg-light: #d9ebf9;
+            --input-focus-border-light: #3b82f6;
+            --btn-bg-light: #e9e9e9;
+            --btn-text-light: #000000;
+            --btn-hover-bg-light: #b9b9b9;
+            --btn-active-bg-light: #3b82f6;
+            --btn-active-text-light: #ffffff;
+            --selected-area-bg-light: #e0e0e0;
+
+            /* Dark Mode Colors */
+            --bg-color-dark: #333333;
+            --text-color-dark: #ffffff;
+            --icon-color-dark: #ffffff;
+            --selected-area-bg-dark: #2b2b2b;
+            --input-bg-dark: #2b2b2b;
+            --input-focus-border-dark: #4ea1e1;
+            --btn-bg-dark: #3b3b3b;
+            --btn-text-dark: #ffffff;
+            --btn-hover-bg-dark: #3b82f6;
+            --btn-active-bg-dark: #4ea1e1;
+            --btn-active-text-dark: #ffffff;
+        }
+
+        /* 应用颜色变量 */
+        body {
+            background-color: var(--bg-color-light);
+            color: var(--text-color-light);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark body {
+            background-color: var(--bg-color-dark);
+            color: var(--text-color-dark);
+        }
+        
+        .fa-solid { color: var(--icon-color-light); }
+        .dark .fa-solid { color: var(--icon-color-dark); }
+        
+        #selected-tags-container { background-color: var(--selected-area-bg-light); }
+        .dark #selected-tags-container { background-color: var(--selected-area-bg-dark); }
+
+        .input-control { background-color: var(--input-bg-light); }
+        .dark .input-control { background-color: var(--input-bg-dark); color: white; }
+        .input-control:focus { outline: 2px solid var(--input-focus-border-light); outline-offset: -2px; }
+        .dark .input-control:focus { outline-color: var(--input-focus-border-dark); }
+
+        .btn {
+            background-color: var(--btn-bg-light);
+            color: var(--btn-text-light);
+        }
+        .dark .btn {
+            background-color: var(--btn-bg-dark);
+            color: var(--btn-text-dark);
+        }
+        .btn:hover { background-color: var(--btn-hover-bg-light); }
+        .dark .btn:hover { background-color: var(--btn-hover-bg-dark); }
+        .btn:active, .btn.active {
+            background-color: var(--btn-active-bg-light);
+            color: var(--btn-active-text-light);
+        }
+        .dark .btn:active, .dark .btn.active {
+            background-color: var(--btn-active-bg-dark);
+            color: var(--btn-active-text-dark);
+        }
+        .btn:active .fa-solid, .btn.active .fa-solid { color: var(--btn-active-text-light) !important; }
+        .dark .btn:active .fa-solid, .dark .btn.active .fa-solid { color: var(--btn-active-text-dark) !important; }
+        
+        /* 通用标签交互样式 */
+        .tag-interactive {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border-radius: 0.375rem; /* 更小的圆角 */
+            padding: 0.25rem 0.5rem; /* 调整内边距 */
+            height: 30px; /* 统一标签高度 */
+            box-sizing: border-box; /* 确保内边距不增加总高度 */
+        }
+        .tag-interactive:hover {
+            transform: translateY(-2px) scale(1.05);
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        /* 标签颜色 */
+        .tag-item[data-category='0'] { background-color: #add8e6; color: black; } /* lightblue */
+        .dark .tag-item[data-category='0'] { background-color: #1e90ff; color: white; } /* dodgerblue */
+        .tag-item[data-category='1'] { background-color: #cd5c5c; color: white; } /* indianred */
+        .dark .tag-item[data-category='1'] { background-color: #b22222; color: white; } /* firebrick */
+        .tag-item[data-category='3'] { background-color: #ee82ee; color: black; } /* violet */
+        .dark .tag-item[data-category='3'] { background-color: #9932cc; color: white; } /* darkorchid */
+        .tag-item[data-category='4'] { background-color: #90ee90; color: black; } /* lightgreen */
+        .dark .tag-item[data-category='4'] { background-color: #006400; color: white; } /* darkgreen */
+        .tag-item[data-category='5'] { background-color: #ffa500; color: black; } /* orange */
+        .dark .tag-item[data-category='5'] { background-color: #ff8c00; color: black; } /* darkorange */
+        /* Kontext Category Color (Category 6) - Unique */
+        .tag-item[data-category='6'] { background-color: #9370db; color: white; } /* mediumpurple */
+        .dark .tag-item[data-category='6'] { background-color: #483d8b; color: white; } /* darkslateblue */
+        .tag-item[data-category='7'], .tag-item[data-category='8'] { background-color: #f5deb3; color: black; } /* wheat for custom */
+        .dark .tag-item[data-category='7'], .tag-item[data-category='8'] { background-color: #d2b48c; color: black; } /* tan for custom */
+        
+        /* 选中状态 */
+        .tag-item.selected {
+            filter: grayscale(100%);
+            opacity: 0.6;
+            box-shadow: inset 0 0 0 2px #888;
+        }
+
+        /* 拖拽样式 */
+        .ghost-class {
+            opacity: 0.4;
+            background-color: #4ea1e1;
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center min-h-screen font-sans">
+
+    <div id="app-container" class="w-[1000px] flex flex-col p-4 space-y-3 overflow-hidden min-h-[700px]">
+
+        <div id="loading-container" class="flex flex-col items-center justify-center h-full">
+            <div class="text-lg mb-4">加载 Danbooru 标签数据</div>
+            <div class="w-full max-w-lg flex flex-col space-y-3">
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="url-input" class="input-control w-full p-2 rounded-lg" placeholder="在此处粘贴CSV文件的URL">
+                    <button id="load-default-url-btn" class="btn px-4 py-2 rounded-lg flex items-center space-x-2 flex-shrink-0">
+                        <i class="fa-solid fa-cloud-arrow-down"></i>
+                        <span id="countdown-text">默认URL</span>
+                    </button>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="load-url-btn" class="btn px-4 py-2 rounded-lg flex-shrink-0">加载网络文件</button>
+                    <div class="text-sm">或</div>
+                    <label for="local-file-input" id="local-file-label" class="btn px-4 py-2 rounded-lg flex items-center space-x-2 cursor-pointer">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <span>加载本地文件</span>
+                    </label>
+                    <input type="file" id="local-file-input" class="hidden" accept=".csv">
+                </div>
+            </div>
+            <div id="loading-status" class="mt-4 text-sm h-5"></div>
+        </div>
+
+        <div id="main-content" class="hidden flex-col h-full space-y-3">
+            
+            <div id="selected-tags-container" class="p-2 rounded-lg min-h-[100px] flex-grow flex flex-wrap gap-2 content-start">
+                </div>
+
+            <div class="flex-shrink-0 flex items-center gap-3">
+                <select id="format-selector" class="input-control p-2 rounded-lg h-10">
+                    <option value="default">默认 (逗号+空格)</option>
+                    <option value="spaces">下划线转空格</option>
+                    <option value="weighted">权重 (tag:1.1)</option>
+                    <option value="full">全格式化 (空格, 权重)</option>
+                </select>
+                <input id="weight-input" type="number" value="1.1" step="0.1" class="input-control p-2 w-20 rounded-lg h-10 hidden">
+                <button id="copy-btn" class="btn p-2 rounded-lg h-10 w-10 flex-shrink-0" title="复制"><i class="fa-solid fa-copy"></i></button>
+                <div id="copy-feedback" class="text-sm w-20 h-5"></div>
+                <div class="flex-grow"></div>
+                <button id="clear-all-btn" class="btn p-2 rounded-lg h-10 w-10" title="清空已选"><i class="fa-solid fa-trash-can"></i></button>
+                <button id="reload-btn" class="btn p-2 rounded-lg h-10 w-10" title="重新加载"><i class="fa-solid fa-rotate-right"></i></button>
+            </div>
+
+            <div class="flex-shrink-0 flex items-center gap-3">
+                <div class="relative flex-grow">
+                    <input type="text" id="search-input" placeholder="搜索标签 (英文, 中文, 别名, 自定义分类...)" class="input-control w-full p-2 pl-4 rounded-lg h-10">
+                    <button id="reset-search-btn" class="absolute right-2 top-1/2 -translate-y-1/2 p-1" title="清空搜索并重置类别"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <button id="theme-toggle-btn" class="btn p-2 rounded-lg h-10 w-10 flex-shrink-0" title="切换颜色模式"><i class="fa-solid fa-moon"></i></button>
+                <button id="nsfw-filter-btn" class="btn p-2 rounded-lg h-10 w-10 flex-shrink-0 active" title="NSFW过滤 (内置分类-禁)"><i class="fa-solid fa-eye-slash"></i></button>
+            </div>
+
+            <div class="flex-shrink-0 flex gap-2">
+                <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md active" data-category="-1">全部</button>
+                <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="0" title="General">通用</button>
+                <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="1" title="Artist">作者</button>
+                <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="3" title="Copyright">版权</button>
+                <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="4" title="Character">角色</button>
+                <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="5" title="Meta">元数据</button>
+                <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="6" title="Kontext Command">Kontext</button>
+                <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="人物数量">人物数量</button>
+                <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="画质">画质</button>
+                <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="反向">反向</button>
+            </div>
+            <div id="tag-display-container" class="flex-grow grid grid-cols-8 grid-rows-10 gap-2 overflow-hidden p-2">
+                </div>
+             <div id="pagination-container" class="flex-shrink-0 flex justify-center items-center gap-4">
+                </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- 全局状态和常量 ---
+    const DEFAULT_CSV_URL = 'https://raw.githubusercontent.com/xhoxye/BooruTagCart/refs/heads/main/assets/danbooru_all.csv';
+    const TAGS_PER_PAGE = 80;
+    const CATEGORY_MAP = {
+        0: '通用', 1: '作者', 3: '版权', 4: '角色', 5: '元数据',
+        6: 'Kontext指令', 7: '内置分类1', 8: '内置分类2'
+    };
+    
+    let allTags = [];
+    let filteredTags = [];
+    let selectedTags = [];
+    let currentPage = 1;
+
+    let countdownInterval;
+    let countdown = 10;
+    let debounceTimer;
+    let activeCategoryFilter = -1;
+    let isNsfwFilterActive = true; // Default to active
+    let activeCustomCategoryFilter = null; // Stores string like '人物数量'
+    
+    // --- DOM 元素引用 ---
+    const loadingContainer = document.getElementById('loading-container');
+    const mainContent = document.getElementById('main-content');
+    const urlInput = document.getElementById('url-input');
+    const loadUrlBtn = document.getElementById('load-url-btn');
+    const loadDefaultUrlBtn = document.getElementById('load-default-url-btn');
+    const countdownText = document.getElementById('countdown-text');
+    const localFileInput = document.getElementById('local-file-input');
+    const localFileLabel = document.getElementById('local-file-label'); // 新增引用
+    const loadingStatus = document.getElementById('loading-status');
+    const selectedTagsContainer = document.getElementById('selected-tags-container');
+    const tagDisplayContainer = document.getElementById('tag-display-container');
+    const searchInput = document.getElementById('search-input');
+    const resetSearchBtn = document.getElementById('reset-search-btn');
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    const nsfwFilterBtn = document.getElementById('nsfw-filter-btn'); // New
+    const reloadBtn = document.getElementById('reload-btn');
+    const clearAllBtn = document.getElementById('clear-all-btn');
+    const copyBtn = document.getElementById('copy-btn');
+    const copyFeedback = document.getElementById('copy-feedback');
+    const formatSelector = document.getElementById('format-selector');
+    const weightInput = document.getElementById('weight-input');
+    const paginationContainer = document.getElementById('pagination-container');
+    const tagFilterBtns = document.querySelectorAll('.tag-filter-btn');
+    const customCategoryFilterBtns = document.querySelectorAll('.custom-category-filter-btn'); // New NodeList
+
+    // --- 初始化函数 ---
+    function init() {
+        urlInput.value = DEFAULT_CSV_URL;
+        const savedTheme = localStorage.getItem('danbooru-tag-theme') || 'light';
+        applyTheme(savedTheme);
+        setupEventListeners();
+        startCountdown();
+        if (isNsfwFilterActive) {
+            nsfwFilterBtn.classList.add('active');
+        }
+        new Sortable(selectedTagsContainer, {
+            animation: 150,
+            ghostClass: 'ghost-class',
+            onEnd: (evt) => {
+                const movedTag = selectedTags.splice(evt.oldIndex, 1)[0];
+                selectedTags.splice(evt.newIndex, 0, movedTag);
+            }
+        });
+    }
+
+    // --- 功能模块: 事件监听 ---
+    function setupEventListeners() {
+        loadUrlBtn.addEventListener('click', () => {
+            interruptCountdown();
+            const url = urlInput.value.trim();
+            if (url) {
+                loadCSV(url);
+            } else {
+                loadingStatus.textContent = '请输入有效的URL';
+            }
+        });
+
+        loadDefaultUrlBtn.addEventListener('click', () => {
+             interruptCountdown(); // 打断倒计时
+             urlInput.value = DEFAULT_CSV_URL; // 仅设置默认URL，不加载
+        });
+
+        // 修正：在点击标签时立即打断倒计时
+        localFileLabel.addEventListener('click', interruptCountdown); 
+        localFileInput.addEventListener('change', (event) => {
+            // change 事件也可能在对话框关闭后触发，但此时倒计时应已通过 label 的 click 事件打断
+            const file = event.target.files[0];
+            if (file) {
+                loadCSV(file);
+            }
+        });
+        
+        urlInput.addEventListener('input', interruptCountdown);
+        reloadBtn.addEventListener('click', () => location.reload());
+        themeToggleBtn.addEventListener('click', toggleTheme);
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => applyFiltersAndRender(), 300);
+        });
+        resetSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            activeCategoryFilter = -1; // Reset category filter to "全部"
+            tagFilterBtns.forEach(b => {
+                if (parseInt(b.dataset.category, 10) === -1) {
+                    b.classList.add('active');
+                } else {
+                    b.classList.remove('active');
+                }
+            });
+            // Also deactivate custom category filters
+            activeCustomCategoryFilter = null;
+            customCategoryFilterBtns.forEach(b => b.classList.remove('active'));
+
+            applyFiltersAndRender();
+        });
+
+        nsfwFilterBtn.addEventListener('click', () => {
+            isNsfwFilterActive = !isNsfwFilterActive;
+            nsfwFilterBtn.classList.toggle('active', isNsfwFilterActive);
+            applyFiltersAndRender();
+        });
+
+        clearAllBtn.addEventListener('click', () => {
+            selectedTags = [];
+            renderSelectedTags();
+            renderTags();
+        });
+        copyBtn.addEventListener('click', copyTagsToClipboard);
+        formatSelector.addEventListener('change', () => {
+            weightInput.classList.toggle('hidden', !['weighted', 'full'].includes(formatSelector.value));
+        });
+        tagFilterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Deactivate all standard filter buttons
+                tagFilterBtns.forEach(b => b.classList.remove('active'));
+                // Activate the clicked standard filter button
+                btn.classList.add('active');
+                activeCategoryFilter = parseInt(btn.dataset.category, 10);
+                
+                // Clear and deactivate custom category filters
+                activeCustomCategoryFilter = null;
+                customCategoryFilterBtns.forEach(b => b.classList.remove('active'));
+
+                applyFiltersAndRender();
+            });
+        });
+        // Event listeners for new custom category buttons
+        customCategoryFilterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const clickedCustomCategory = btn.dataset.customCategory;
+
+                // Toggle logic: if clicked again, deactivate
+                if (activeCustomCategoryFilter === clickedCustomCategory) {
+                    activeCustomCategoryFilter = null;
+                } else {
+                    activeCustomCategoryFilter = clickedCustomCategory;
+                }
+
+                // Deactivate all custom filter buttons first
+                customCategoryFilterBtns.forEach(b => b.classList.remove('active'));
+                // Activate only the currently selected (or newly selected) one
+                if (activeCustomCategoryFilter) {
+                    btn.classList.add('active');
+                }
+
+                // Deactivate all standard category filter buttons except "全部"
+                tagFilterBtns.forEach(b => {
+                    if (parseInt(b.dataset.category, 10) === -1) {
+                        b.classList.add('active'); 
+                    } else {
+                        b.classList.remove('active');
+                    }
+                });
+                activeCategoryFilter = -1; // Set standard filter to "全部"
+
+                applyFiltersAndRender();
+            });
+        });
+    }
+
+    // --- 功能模块: 加载与解析 CSV (已修正) ---
+    function startCountdown() {
+        countdown = 10; // 重置倒计时
+        countdownText.textContent = `默认URL (${countdown})`;
+        // 每次启动前清除旧的计时器，防止重复
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+        }
+        countdownInterval = setInterval(() => {
+            countdown--;
+            countdownText.textContent = `默认URL (${countdown})`;
+            if (countdown <= 0) {
+                // 只有在倒计时未被中断（即 countdownInterval 仍然存在）时才自动加载
+                if (countdownInterval) { 
+                    clearInterval(countdownInterval);
+                    countdownInterval = null; // 清除引用
+                    loadCSV(DEFAULT_CSV_URL);
+                }
+            }
+        }, 1000);
+    }
+
+    function interruptCountdown() {
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+            countdownInterval = null; // 确保清除引用，阻止自动加载
+            countdownText.textContent = '默认URL'; // 恢复按钮文本
+        }
+    }
+
+    async function loadCSV(source) {
+        loadingStatus.textContent = '正在加载并解析CSV文件...';
+        allTags = [];
+
+        try {
+            let csvData;
+            if (typeof source === 'string') {
+                // 网络文件：先完整下载再解析
+                loadingStatus.textContent = '正在从网络下载文件...';
+                const response = await fetch(source);
+                if (!response.ok) {
+                    throw new Error(`网络错误: ${response.status} ${response.statusText}`);
+                }
+                csvData = await response.text();
+                loadingStatus.textContent = '下载完成，正在解析...';
+            } else {
+                // 本地文件
+                csvData = source;
+            }
+
+            Papa.parse(csvData, {
+                worker: true, // 在后台线程解析，避免UI卡顿
+                header: false,
+                encoding: "UTF-8",
+                step: (row) => {
+                    const data = row.data;
+                    if (data.length >= 3 && data[0]) {
+                        allTags.push({
+                            name: data[0].trim(),
+                            category: parseInt(data[1], 10),
+                            count: parseInt(data[2], 10),
+                            aliases: data[3] || '',
+                            translation: data[4] || '',
+                            customCategory: data[5] || ''
+                        });
+                    }
+                },
+                complete: () => {
+                    loadingStatus.textContent = `加载完成！共 ${allTags.length} 个标签。`;
+                    setTimeout(() => {
+                        loadingContainer.classList.add('hidden');
+                        mainContent.classList.remove('hidden');
+                        mainContent.classList.add('flex');
+                        applyFiltersAndRender();
+                    }, 500);
+                },
+                error: (err) => {
+                    throw err; // 将解析错误抛出到catch块
+                }
+            });
+        } catch (err) {
+            loadingStatus.textContent = `加载失败: ${err.message}`;
+            console.error("加载或解析CSV时出错:", err);
+        }
+    }
+    
+    // --- 功能模块: 渲染与UI更新 ---
+    function renderTags() {
+        tagDisplayContainer.innerHTML = '';
+        const startIndex = (currentPage - 1) * TAGS_PER_PAGE;
+        const tagsToRender = filteredTags.slice(startIndex, startIndex + TAGS_PER_PAGE);
+
+        tagsToRender.forEach(tag => {
+            const tagEl = document.createElement('div');
+            const displayText = tag.translation ? tag.translation : tag.name.replace(/_/g, ' ');
+            
+            tagEl.className = 'tag-item tag-interactive px-2 py-1 rounded-md cursor-pointer text-xs flex items-center justify-center';
+            
+            tagEl.dataset.category = tag.category;
+            tagEl.dataset.tagName = tag.name;
+            tagEl.title = generateTagTitle(tag);
+
+            const textSpan = document.createElement('span');
+            textSpan.textContent = displayText;
+            textSpan.style.overflow = 'hidden';
+            textSpan.style.whiteSpace = 'nowrap';
+            textSpan.style.textOverflow = 'ellipsis';
+            textSpan.style.minWidth = '0';
+            tagEl.appendChild(textSpan);
+
+            if (selectedTags.some(st => st.name === tag.name)) {
+                tagEl.classList.add('selected');
+            }
+            tagEl.addEventListener('click', () => toggleTagSelection(tag));
+            tagDisplayContainer.appendChild(tagEl);
+        });
+    }
+
+    function renderSelectedTags() {
+        selectedTagsContainer.innerHTML = '';
+        selectedTags.forEach(tag => {
+            const tagEl = document.createElement('div');
+            const displayText = tag.translation ? tag.translation : tag.name.replace(/_/g, ' ');
+            
+            tagEl.className = 'tag-item tag-interactive px-2 py-1 rounded-md cursor-pointer text-xs flex items-center justify-center min-w-[50px] max-w-[250px]';
+            
+            tagEl.dataset.category = tag.category;
+            tagEl.title = generateTagTitle(tag);
+
+            const textSpan = document.createElement('span');
+            textSpan.textContent = displayText;
+            textSpan.style.overflow = 'hidden';
+            textSpan.style.whiteSpace = 'nowrap';
+            textSpan.style.textOverflow = 'ellipsis';
+            textSpan.style.minWidth = '0';
+            tagEl.appendChild(textSpan);
+            
+            tagEl.addEventListener('click', () => toggleTagSelection(tag));
+            selectedTagsContainer.appendChild(tagEl);
+        });
+    }
+    
+    function renderPagination() {
+        paginationContainer.innerHTML = '';
+        const totalPages = Math.ceil(filteredTags.length / TAGS_PER_PAGE);
+        if (totalPages <= 1) return;
+
+        const createButton = (html, disabled, onClick) => {
+            const btn = document.createElement('button');
+            btn.innerHTML = html;
+            btn.className = 'btn p-2 rounded-lg h-8 w-8 flex items-center justify-center';
+            btn.disabled = disabled;
+            if (!disabled) btn.onclick = onClick;
+            return btn;
+        };
+        
+        const prevBtn = createButton('<i class="fa-solid fa-chevron-left"></i>', currentPage === 1, () => {
+            currentPage--;
+            renderTags();
+            renderPagination();
+        });
+        paginationContainer.appendChild(prevBtn);
+
+        const pageInfo = document.createElement('span');
+        pageInfo.textContent = `${currentPage} / ${totalPages}`;
+        pageInfo.className = 'text-sm';
+        paginationContainer.appendChild(pageInfo);
+
+        const nextBtn = createButton('<i class="fa-solid fa-chevron-right"></i>', currentPage === totalPages, () => {
+            currentPage++;
+            renderTags();
+            renderPagination();
+        });
+        paginationContainer.appendChild(nextBtn);
+    }
+    
+    function applyFiltersAndRender() {
+        const query = searchInput.value.toLowerCase().trim();
+        let tempFilteredTags = allTags; // Start with all tags
+
+        // 1. Apply standard category filter
+        if (activeCategoryFilter !== -1) {
+            tempFilteredTags = tempFilteredTags.filter(tag => tag.category === activeCategoryFilter);
+        }
+
+        // 2. Apply custom category filter (if active)
+        if (activeCustomCategoryFilter) {
+            tempFilteredTags = tempFilteredTags.filter(tag =>
+                tag.customCategory.toLowerCase().includes(`内置分类-${activeCustomCategoryFilter}`.toLowerCase())
+            );
+        }
+
+        // 3. Apply NSFW filter (if active)
+        if (isNsfwFilterActive) {
+            tempFilteredTags = tempFilteredTags.filter(tag =>
+                !tag.customCategory.toLowerCase().includes('内置分类-禁')
+            );
+        }
+
+        // 4. Apply search query filter
+        if (query) {
+            tempFilteredTags = tempFilteredTags.filter(tag =>
+                tag.name.toLowerCase().includes(query) ||
+                tag.aliases.toLowerCase().includes(query) ||
+                tag.translation.toLowerCase().includes(query) ||
+                tag.customCategory.toLowerCase().includes(query)
+            );
+        }
+
+        filteredTags = tempFilteredTags; // Update the global filteredTags
+        currentPage = 1;
+        renderTags();
+        renderPagination();
+    }
+    
+    // --- 功能模块: 核心交互逻辑与辅助函数 ---
+    function toggleTagSelection(tag) {
+        const index = selectedTags.findIndex(st => st.name === tag.name);
+        if (index > -1) {
+            selectedTags.splice(index, 1);
+        } else {
+            selectedTags.push(tag);
+        }
+        renderSelectedTags();
+        // 更新显示在tagDisplayContainer中的标签样式
+        const displayedTagElement = tagDisplayContainer.querySelector(`[data-tag-name="${tag.name}"]`);
+        if (displayedTagElement) {
+            displayedTagElement.classList.toggle('selected', index === -1);
+        }
+    }
+    
+    function generateTagTitle(tag) {
+        const categoryName = CATEGORY_MAP[tag.category] || `未知类别 (${tag.category})`;
+        return [
+            `英文: ${tag.name}`,
+            `中文: ${tag.translation || '无'}`,
+            `别名: ${tag.aliases || '无'}`,
+            `类别: ${categoryName}`,
+            `帖子数量: ${tag.count.toLocaleString()}`,
+            `自定义分类: ${tag.customCategory || '无'}`
+        ].join('\n');
+    }
+    
+    function formatTags() {
+        const format = formatSelector.value;
+        const weight = weightInput.value;
+        return selectedTags.map(tag => {
+            let tagName = tag.name;
+            if (format === 'spaces' || format === 'full') {
+                tagName = tagName.replace(/_/g, ' ');
+            }
+            if (format === 'weighted' || format === 'full') {
+                tagName = `(${tagName}:${weight})`;
+            }
+            return tagName;
+        }).join(', ');
+    }
+    
+    function copyTagsToClipboard() {
+        const formattedString = formatTags();
+        if (!formattedString) return;
+        navigator.clipboard.writeText(formattedString).then(() => {
+            copyFeedback.textContent = '已复制!';
+            setTimeout(() => { copyFeedback.textContent = ''; }, 2000);
+        }).catch(err => {
+            copyFeedback.textContent = '复制失败!';
+            console.error('Copy failed', err);
+        });
+    }
+
+    // --- 功能模块: 外观与主题 ---
+    function applyTheme(theme) {
+        const html = document.documentElement;
+        const icon = themeToggleBtn.querySelector('i');
+        if (theme === 'dark') {
+            html.classList.add('dark');
+            html.classList.remove('light');
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        } else {
+            html.classList.add('light');
+            html.classList.remove('dark');
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+        }
+        localStorage.setItem('danbooru-tag-theme', theme);
+    }
+    
+    function toggleTheme() {
+        const currentTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+        applyTheme(currentTheme);
+    }
+
+    // --- 启动应用 ---
+    init();
+});
+</script>
+
+</body>
+</html>
