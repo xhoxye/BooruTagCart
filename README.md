@@ -5,6 +5,7 @@
 
 <div align="center">
   <h3><a href="https://xhoxye.github.io/BooruTagCart/"> >> Demo 网站 <<</a></h3>
+  <h3><a href="https://xhoxye.github.io/BooruTagCart/SimpAI_TagCart_index.html"> >> SimpAI 内嵌标签助手 测试 Demo 网站 <<</a></h3>
 </div>
 
 # BooruTagCart 🛒
