@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="light">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,85 +17,68 @@
         /* 注入自定义样式和颜色变量 */
         :root {
             /* 亮色模式颜色 */
-            --bg-color-light: #f7f7f7;
-            --text-color-light: #5f5c5c;
-            --icon-color-light: #5f5c5c;
-            --input-bg-light: #d9ebf9;
-            --input-focus-border-light: #3b82f6;
-            --btn-bg-light: #e9e9e9;
-            --btn-text-light: #000000;
-            --btn-hover-bg-light: #b9b9b9;
-            --btn-active-bg-light: #3b82f6;
-            --btn-active-text-light: #ffffff;
-            --selected-area-bg-light: #e0e0e0;
+            --bg-color: #f7f7f7;
+            --text-color: #5f5c5c;
+            --icon-color: #5f5c5c;
+            --input-bg: #d9ebf9;
+            --input-focus-border: #3b82f6;
+            --btn-bg: #e9e9e9;
+            --btn-text: #000000;
+            --btn-hover-bg: #b9b9b9;
+            --btn-active-bg: #3b82f6;
+            --btn-active-text: #ffffff;
+            --selected-area-bg: #e0e0e0;
+        }
 
+        html[data-theme='dark'] {
             /* 暗色模式颜色 */
-            --bg-color-dark: #333333;
-            --text-color-dark: #ffffff;
-            --icon-color-dark: #ffffff;
-            --selected-area-bg-dark: #2b2b2b;
-            --input-bg-dark: #2b2b2b;
-            --input-focus-border-dark: #4ea1e1;
-            --btn-bg-dark: #3b3b3b;
-            --btn-text-dark: #ffffff;
-            --btn-hover-bg-dark: #3b82f6;
-            --btn-active-bg-dark: #4ea1e1;
-            --btn-active-text-dark: #ffffff;
+            --bg-color: #333333;
+            --text-color: #ffffff;
+            --icon-color: #ffffff;
+            --selected-area-bg: #2b2b2b;
+            --input-bg: #2b2b2b;
+            --input-focus-border: #4ea1e1;
+            --btn-bg: #3b3b3b;
+            --btn-text: #ffffff;
+            --btn-hover-bg: #3b82f6;
+            --btn-active-bg: #4ea1e1;
+            --btn-active-text: #ffffff;
         }
 
         /* 应用颜色变量 */
         body {
-            background-color: var(--bg-color-light);
-            color: var(--text-color-light);
+            background-color: var(--bg-color);
+            color: var(--text-color);
             transition: background-color 0.3s, color 0.3s;
         }
-        .dark body {
-            background-color: var(--bg-color-dark);
-            color: var(--text-color-dark);
-        }
         
-        .fa-solid { color: var(--icon-color-light); }
-        .dark .fa-solid { color: var(--icon-color-dark); }
+        .fa-solid { color: var(--icon-color); }
         
         #selected-tags-container { 
-            background-color: var(--selected-area-bg-light);
+            background-color: var(--selected-area-bg);
             /* 添加这些用于隐藏滚动条 */
             scrollbar-width: none; /* For Firefox */
         }
-        .dark #selected-tags-container { background-color: var(--selected-area-bg-dark); }
 
         /* For Webkit browsers (Chrome, Safari, Edge) */
         #selected-tags-container::-webkit-scrollbar {
             display: none;
         }
 
-
-        /* Modified to also apply to formatted-text-display */
-        .input-control { background-color: var(--input-bg-light); }
-        .dark .input-control { background-color: var(--input-bg-dark); color: white; }
-        .input-control:focus { outline: 2px solid var(--input-focus-border-light); outline-offset: -2px; }
-        .dark .input-control:focus { outline-color: var(--input-focus-border-dark); }
-
+        .input-control { background-color: var(--input-bg); }
+        html[data-theme='dark'] .input-control { color: white; }
+        .input-control:focus { outline: 2px solid var(--input-focus-border); outline-offset: -2px; }
+        
         .btn {
-            background-color: var(--btn-bg-light);
-            color: var(--btn-text-light);
+            background-color: var(--btn-bg);
+            color: var(--btn-text);
         }
-        .dark .btn {
-            background-color: var(--btn-bg-dark);
-            color: var(--btn-text-dark);
-        }
-        .btn:hover { background-color: var(--btn-hover-bg-light); }
-        .dark .btn:hover { background-color: var(--btn-hover-bg-dark); }
+        .btn:hover { background-color: var(--btn-hover-bg); }
         .btn:active, .btn.active {
-            background-color: var(--btn-active-bg-light);
-            color: var(--btn-active-text-light);
+            background-color: var(--btn-active-bg);
+            color: var(--btn-active-text);
         }
-        .dark .btn:active, .dark .btn.active {
-            background-color: var(--btn-active-bg-dark);
-            color: var(--btn-active-text-dark);
-        }
-        .btn:active .fa-solid, .btn.active .fa-solid { color: var(--btn-active-text-light) !important; }
-        .dark .btn:active .fa-solid, .dark .btn.active .fa-solid { color: var(--btn-active-text-dark) !important; }
+        .btn:active .fa-solid, .btn.active .fa-solid { color: var(--btn-active-text) !important; }
         
         /* 通用标签交互样式 */
         .tag-interactive {
@@ -113,20 +96,20 @@
 
         /* 标签颜色 */
         .tag-item[data-category='0'] { background-color: #add8e6; color: black; } /* lightblue */
-        .dark .tag-item[data-category='0'] { background-color: #1e90ff; color: white; } /* dodgerblue */
+        html[data-theme='dark'] .tag-item[data-category='0'] { background-color: #1e90ff; color: white; } /* dodgerblue */
         .tag-item[data-category='1'] { background-color: #cd5c5c; color: white; } /* indianred */
-        .dark .tag-item[data-category='1'] { background-color: #b22222; color: white; } /* firebrick */
+        html[data-theme='dark'] .tag-item[data-category='1'] { background-color: #b22222; color: white; } /* firebrick */
         .tag-item[data-category='3'] { background-color: #ee82ee; color: black; } /* violet */
-        .dark .tag-item[data-category='3'] { background-color: #9932cc; color: white; } /* darkorchid */
+        html[data-theme='dark'] .tag-item[data-category='3'] { background-color: #9932cc; color: white; } /* darkorchid */
         .tag-item[data-category='4'] { background-color: #90ee90; color: black; } /* lightgreen */
-        .dark .tag-item[data-category='4'] { background-color: #006400; color: white; } /* darkgreen */
+        html[data-theme='dark'] .tag-item[data-category='4'] { background-color: #006400; color: white; } /* darkgreen */
         .tag-item[data-category='5'] { background-color: #ffa500; color: black; } /* orange */
-        .dark .tag-item[data-category='5'] { background-color: #ff8c00; color: black; } /* darkorange */
+        html[data-theme='dark'] .tag-item[data-category='5'] { background-color: #ff8c00; color: black; } /* darkorange */
         /* Kontext Category Color (Category 6) - Unique */
         .tag-item[data-category='6'] { background-color: #9370db; color: white; } /* mediumpurple */
-        .dark .tag-item[data-category='6'] { background-color: #483d8b; color: white; } /* darkslateblue */
+        html[data-theme='dark'] .tag-item[data-category='6'] { background-color: #483d8b; color: white; } /* darkslateblue */
         .tag-item[data-category='7'], .tag-item[data-category='8'] { background-color: #f5deb3; color: black; } /* wheat for custom */
-        .dark .tag-item[data-category='7'], .tag-item[data-category='8'] { background-color: #d2b48c; color: black; } /* tan for custom */
+        html[data-theme='dark'] .tag-item[data-category='7'], html[data-theme='dark'] .tag-item[data-category='8'] { background-color: #d2b48c; color: black; } /* tan for custom */
         
         /* 选中状态 */
         .tag-item.selected {
@@ -159,6 +142,63 @@
         #formatted-text-display::-webkit-scrollbar {
             display: none; /* 隐藏滚动条 */
         }
+
+        /* 可拖拽浮动容器样式 */
+        #draggable-container {
+            position: fixed;
+            /* top 和 left 将由JS动态计算 */
+            width: 960px; /* 固定宽度 */
+            max-height: calc(100vh - 160px); /* 限制最大高度，留出顶部和底部空间 */
+            background-color: var(--bg-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none; /* 默认隐藏 */
+            flex-direction: column;
+            overflow: hidden; /* 内部滚动条控制 */
+            resize: vertical; /* 允许垂直调整大小 */
+            min-height: 300px; /* 最小高度 */
+        }
+        #draggable-handle {
+            cursor: grab;
+            height: 20px;
+            background-color: var(--btn-bg);
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--btn-text);
+            font-size: 0.8rem;
+        }
+        #draggable-handle:active {
+            cursor: grabbing;
+        }
+
+        /* 悬浮球样式 */
+        #float-ball {
+            position: fixed;
+            /* top 和 left 将由JS动态计算，right 属性不再使用 */
+            width: 50px;
+            height: 50px;
+            background-color: var(--btn-active-bg);
+            color: var(--btn-active-text);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: grab; /* 变为可拖拽图标 */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            transition: background-color 0.3s, transform 0.2s;
+            display: none; /* 默认隐藏 */
+        }
+        #float-ball:hover {
+            transform: scale(1.05);
+        }
+        #float-ball:active {
+            cursor: grabbing;
+        }
     </style>
 </head>
 <body class="flex justify-center items-center min-h-screen font-sans">
@@ -190,53 +230,56 @@
 
         <div id="main-content" class="hidden flex-col h-full space-y-3">
             
-            <div id="formatted-text-box" class="p-2 rounded-lg h-[137px] hidden">
+            <div id="formatted-text-box" class="p-2 rounded-lg h-[137px]">
                 <textarea id="formatted-text-display" class="w-full h-full input-control rounded-md resize-none" readonly></textarea>
             </div>
+            <div id="draggable-container" class="flex flex-col space-y-3 p-4">
+                <div id="draggable-handle" class="flex-shrink-0">拖拽此处</div>
 
-            <div id="selected-tags-container" class="p-2 rounded-lg h-[125px] flex flex-wrap gap-2 content-start overflow-y-auto"> </div>
+                <div id="selected-tags-container" class="p-2 rounded-lg h-[125px] flex flex-wrap gap-2 content-start overflow-y-auto"> </div>
 
-            <div class="flex-shrink-0 flex items-center gap-3">
-                <div class="relative flex-grow">
-                    <input type="text" id="search-input" placeholder="搜索标签 (英文, 中文, 别名, 自定义分类...)" class="input-control w-full p-2 pl-4 rounded-lg h-10">
-                    <button id="reset-search-btn" class="absolute right-2 top-1/2 -translate-y-1/2 p-1" title="清空搜索并重置类别"><i class="fa-solid fa-xmark"></i></button>
+                <div class="flex-shrink-0 flex items-center gap-3">
+                    <div class="relative flex-grow">
+                        <input type="text" id="search-input" placeholder="搜索标签 (英文, 中文, 别名, 自定义分类...)" class="input-control w-full p-2 pl-4 rounded-lg h-10">
+                        <button id="reset-search-btn" class="absolute right-2 top-1/2 -translate-y-1/2 p-1" title="清空搜索并重置类别"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    
+                    <input id="weight-input" type="number" value="1.1" step="0.1" class="input-control p-2 w-20 rounded-lg h-10 hidden">
+                    <select id="format-selector" class="input-control p-2 rounded-lg h-10">
+                        <option value="default">默认 (逗号+空格)</option>
+                        <option value="spaces">下划线转空格</option>
+                        <option value="weighted">权重 (tag:1.1)</option>
+                        <option value="full">全格式化 (空格, 权重)</option>
+                    </select>
+                    <button id="copy-btn" class="btn p-2 rounded-lg h-10 w-10 flex-shrink-0" title="复制"><i class="fa-solid fa-copy"></i></button>
+                    
+                    <button id="nsfw-filter-btn" class="btn p-2 rounded-lg h-10 w-10 flex-shrink-0 active" title="NSFW过滤 (内置分类-禁)"><i class="fa-solid fa-eye-slash"></i></button>
+                    <button id="clear-all-btn" class="btn p-2 rounded-lg h-10 w-10" title="清空已选"><i class="fa-solid fa-trash-can"></i></button>
+                    <button id="reload-btn" class="btn p-2 rounded-lg h-10 w-10" title="重新加载"><i class="fa-solid fa-rotate-right"></i></button>
                 </div>
-                
-                <input id="weight-input" type="number" value="1.1" step="0.1" class="input-control p-2 w-20 rounded-lg h-10 hidden">
-                <select id="format-selector" class="input-control p-2 rounded-lg h-10">
-                    <option value="default">默认 (逗号+空格)</option>
-                    <option value="spaces">下划线转空格</option>
-                    <option value="weighted">权重 (tag:1.1)</option>
-                    <option value="full">全格式化 (空格, 权重)</option>
-                </select>
-                <button id="copy-btn" class="btn p-2 rounded-lg h-10 w-10 flex-shrink-0" title="复制"><i class="fa-solid fa-copy"></i></button>
-                
-                <button id="view-toggle-btn" class="btn p-2 rounded-lg h-10 w-10 flex-shrink-0" title="切换视图">
-                    <i class="fa-solid fa-tags"></i> </button>
 
-                <button id="theme-toggle-btn" class="btn p-2 rounded-lg h-10 w-10 flex-shrink-0" title="切换颜色模式"><i class="fa-solid fa-moon"></i></button>
-                <button id="nsfw-filter-btn" class="btn p-2 rounded-lg h-10 w-10 flex-shrink-0 active" title="NSFW过滤 (内置分类-禁)"><i class="fa-solid fa-eye-slash"></i></button>
-                <button id="clear-all-btn" class="btn p-2 rounded-lg h-10 w-10" title="清空已选"><i class="fa-solid fa-trash-can"></i></button>
-                <button id="reload-btn" class="btn p-2 rounded-lg h-10 w-10" title="重新加载"><i class="fa-solid fa-rotate-right"></i></button>
+                <div class="flex-shrink-0 flex gap-2">
+                    <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md active" data-category="-1">全部</button>
+                    <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="0" title="General">通用</button>
+                    <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="1" title="Artist">作者</button>
+                    <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="3" title="Copyright">版权</button>
+                    <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="4" title="Character">角色</button>
+                    <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="5" title="Meta">元数据</button>
+                    <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="6" title="Kontext Command">Kontext</button>
+                    <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="人物数量">人物数量</button>
+                    <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="画质">画质</button>
+                    <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="反向">反向</button>
+                </div>
+                <div id="tag-display-container" class="flex-grow grid grid-cols-8 grid-rows-5 gap-2 overflow-hidden p-2">
+                </div>
+                <div id="pagination-container" class="flex-shrink-0 flex justify-center items-center gap-4">
+                </div>
             </div>
-
-            <div class="flex-shrink-0 flex gap-2">
-                <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md active" data-category="-1">全部</button>
-                <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="0" title="General">通用</button>
-                <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="1" title="Artist">作者</button>
-                <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="3" title="Copyright">版权</button>
-                <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="4" title="Character">角色</button>
-                <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="5" title="Meta">元数据</button>
-                <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="6" title="Kontext Command">Kontext</button>
-                <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="人物数量">人物数量</button>
-                <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="画质">画质</button>
-                <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="反向">反向</button>
-            </div>
-            <div id="tag-display-container" class="flex-grow grid grid-cols-8 grid-rows-5 gap-2 overflow-hidden p-2">
-                </div>
-             <div id="pagination-container" class="flex-shrink-0 flex justify-center items-center gap-4">
-                </div>
         </div>
+    </div>
+
+    <div id="float-ball">
+        <i class="fa-solid fa-tags"></i>
     </div>
 
 <script>
@@ -261,7 +304,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeCategoryFilter = -1; // 当前激活的分类过滤器（-1表示全部）
     let isNsfwFilterActive = true; // NSFW 过滤是否激活（默认为激活）
     let activeCustomCategoryFilter = null; // 当前激活的自定义分类过滤器（例如 '人物数量'）
-    let isTextBoxVisible = false; // 文本框是否可见的状态变量
+    
+    let lastFormattedText = ''; // 新增：存储最后一次格式化后的文本
+    let copyMessageTimeoutId; // 新增：存储复制成功/失败消息的计时器ID
 
     // --- DOM 元素引用 ---
     const loadingContainer = document.getElementById('loading-container');
@@ -279,8 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const tagDisplayContainer = document.getElementById('tag-display-container');
     const searchInput = document.getElementById('search-input');
     const resetSearchBtn = document.getElementById('reset-search-btn');
-    const themeToggleBtn = document.getElementById('theme-toggle-btn');
-    const viewToggleBtn = document.getElementById('view-toggle-btn'); // 视图切换按钮
     const nsfwFilterBtn = document.getElementById('nsfw-filter-btn');
     const reloadBtn = document.getElementById('reload-btn');
     const clearAllBtn = document.getElementById('clear-all-btn');
@@ -291,11 +334,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const tagFilterBtns = document.querySelectorAll('.tag-filter-btn');
     const customCategoryFilterBtns = document.querySelectorAll('.custom-category-filter-btn');
 
+    // 新增DOM元素引用
+    const floatBall = document.getElementById('float-ball');
+    const draggableContainer = document.getElementById('draggable-container');
+    const draggableHandle = document.getElementById('draggable-handle');
+
     // --- 初始化函数 ---
     function init() {
         urlInput.value = DEFAULT_CSV_URL;
-        const savedTheme = localStorage.getItem('danbooru-tag-theme') || 'light';
-        applyTheme(savedTheme);
+        applyThemeFromUrl(); // 根据URL参数应用主题
         setupEventListeners();
         startCountdown();
         if (isNsfwFilterActive) {
@@ -311,9 +358,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateFormattedTextBox(); // 拖拽后更新文本框
             }
         });
-        // 初始状态设置：文本框隐藏，已选标签容器显示
-        formattedTextBox.classList.add('hidden');
-        selectedTagsContainer.classList.remove('hidden');
+        // 初始状态设置：formattedTextBox 显示，draggableContainer 隐藏
+        formattedTextBox.classList.remove('hidden'); 
+        draggableContainer.style.display = 'none'; // 确保初始化时隐藏
+        floatBall.style.display = 'none'; // 确保初始化时隐藏
+
+        // 1. 初始化时显示提示信息
+        formattedTextDisplay.value = '点击悬浮球进行标签选取'; 
+        formattedTextDisplay.style.color = '#FFA500'; // 设置为橙色提示文本
+        // 移除 init 阶段对 updateFormattedTextBox() 的调用，因为它会覆盖初始提示
+        // updateFormattedTextBox(); 
     }
 
     // --- 功能模块: 事件监听 ---
@@ -343,8 +397,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         urlInput.addEventListener('input', interruptCountdown); // 用户输入URL时中断倒计时
         reloadBtn.addEventListener('click', () => location.reload()); // 重新加载页面
-        themeToggleBtn.addEventListener('click', toggleTheme); // 切换主题
-        viewToggleBtn.addEventListener('click', toggleView); // 视图切换事件监听
         searchInput.addEventListener('input', () => {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => applyFiltersAndRender(), 300); // 搜索输入防抖
@@ -426,6 +478,104 @@ document.addEventListener('DOMContentLoaded', () => {
                 applyFiltersAndRender(); // 应用过滤器并重新渲染
             });
         });
+
+        // 悬浮球点击事件 (现在它也变得可拖拽，所以点击和拖拽需要区分)
+        floatBall.addEventListener('mousedown', (e) => {
+            // 确保只在鼠标左键按下时开始拖拽或处理点击
+            if (e.button !== 0) return; 
+
+            let isFloatBallDragging = false;
+            let offset = { x: e.clientX - floatBall.getBoundingClientRect().left, y: e.clientY - floatBall.getBoundingClientRect().top };
+
+            const onMouseMove = (moveEvent) => {
+                // 如果鼠标移动距离超过一定阈值，则认为是拖拽
+                if (Math.abs(moveEvent.clientX - e.clientX) > 5 || Math.abs(moveEvent.clientY - e.clientY) > 5) {
+                    isFloatBallDragging = true;
+                }
+
+                if (isFloatBallDragging) {
+                    let newX = moveEvent.clientX - offset.x;
+                    let newY = moveEvent.clientY - offset.y;
+
+                    // 限制拖拽范围
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+                    const ballRect = floatBall.getBoundingClientRect();
+
+                    if (newX < 0) newX = 0;
+                    if (newY < 0) newY = 0;
+                    if (newX + ballRect.width > viewportWidth) newX = viewportWidth - ballRect.width;
+                    if (newY + ballRect.height > viewportHeight) newY = viewportHeight - ballRect.height;
+
+                    floatBall.style.left = `${newX}px`;
+                    floatBall.style.top = `${newY}px`;
+                    floatBall.style.right = 'auto'; // 取消right属性，避免冲突
+                }
+            };
+
+            const onMouseUp = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+
+                if (!isFloatBallDragging) {
+                    // 如果没有拖拽行为，认为是点击
+                    if (draggableContainer.style.display === 'none' || draggableContainer.style.display === '') {
+                        draggableContainer.style.display = 'flex';
+                        // 初始显示时设置位置
+                        positionDraggableContainer();
+                    } else {
+                        draggableContainer.style.display = 'none';
+                    }
+                }
+                isFloatBallDragging = false; // 重置拖拽状态
+            };
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+
+        // 可拖拽容器拖拽事件
+        let isDraggingContainer = false;
+        let containerOffset = { x: 0, y: 0 };
+
+        draggableHandle.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return; // 只响应鼠标左键
+            isDraggingContainer = true;
+            containerOffset = {
+                x: e.clientX - draggableContainer.getBoundingClientRect().left,
+                y: e.clientY - draggableContainer.getBoundingClientRect().top
+            };
+            draggableHandle.style.cursor = 'grabbing';
+            // 阻止文本选择
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDraggingContainer) return;
+
+            let newX = e.clientX - containerOffset.x;
+            let newY = e.clientY - containerOffset.y;
+
+            // 获取容器和视口边界
+            const containerRect = draggableContainer.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            // 限制拖拽范围
+            if (newX < 0) newX = 0;
+            if (newY < 0) newY = 0;
+            if (newX + containerRect.width > viewportWidth) newX = viewportWidth - containerRect.width;
+            if (newY + containerRect.height > viewportHeight) newY = viewportHeight - containerRect.height;
+            
+            draggableContainer.style.left = `${newX}px`;
+            draggableContainer.style.top = `${newY}px`;
+            draggableContainer.style.transform = 'none'; // 拖拽时取消transform，使用left/top
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDraggingContainer = false;
+            draggableHandle.style.cursor = 'grab';
+        });
     }
 
     // --- 功能模块: 加载与解析 CSV ---
@@ -497,8 +647,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         loadingContainer.classList.add('hidden'); // 隐藏加载容器
                         mainContent.classList.remove('hidden'); // 显示主内容
                         mainContent.classList.add('flex'); // 添加 flex 布局
+                        
+                        // 加载完成后，计算并设置可拖拽容器和悬浮球的初始位置
+                        positionDraggableContainer();
+                        positionFloatBall(); // 新增：定位悬浮球
+
+                        floatBall.style.display = 'flex'; // 显示悬浮球
                         applyFiltersAndRender(); // 应用过滤器并渲染标签
-                        updateFormattedTextBox(); // 初始化时更新文本框
+                        updateFormattedTextBox(); // 加载完成后更新文本框以显示实际内容
+
+                        // 恢复文本颜色为绿色
+                        formattedTextDisplay.style.color = '#00ff00';
+
                     }, 500);
                 },
                 error: (err) => { // 解析错误回调
@@ -509,6 +669,34 @@ document.addEventListener('DOMContentLoaded', () => {
             loadingStatus.textContent = `加载失败: ${err.message}`;
             console.error("加载或解析CSV时出错:", err);
         }
+    }
+
+    // 函数：定位可拖拽容器
+    function positionDraggableContainer() {
+        const textBoxRect = formattedTextBox.getBoundingClientRect();
+        // 计算初始 top 位置：文本框底部 + 20px
+        const initialTop = textBoxRect.bottom + 20; 
+        
+        // 计算初始 left 位置：居中
+        const containerWidth = draggableContainer.offsetWidth; // 获取容器宽度
+        const initialLeft = (window.innerWidth - containerWidth) / 2;
+
+        draggableContainer.style.top = `${initialTop}px`;
+        draggableContainer.style.left = `${initialLeft}px`;
+        draggableContainer.style.transform = 'none'; // 确保没有 transform 干扰
+    }
+
+    // 新增函数：定位悬浮球
+    function positionFloatBall() {
+        const textBoxRect = formattedTextBox.getBoundingClientRect();
+        // 悬浮球顶部与文本框顶部对齐
+        const floatBallTop = textBoxRect.top; 
+        // 悬浮球左侧位于文本框右侧外20px
+        const floatBallLeft = textBoxRect.right + 20;
+
+        floatBall.style.top = `${floatBallTop}px`;
+        floatBall.style.left = `${floatBallLeft}px`;
+        floatBall.style.right = 'auto'; // 确保 right 属性被覆盖
     }
     
     // --- 功能模块: 渲染与UI更新 ---
@@ -693,70 +881,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 更新格式化文本框内容
     function updateFormattedTextBox() {
-        const formattedString = formatTags();
-        formattedTextDisplay.value = formattedString;
+        lastFormattedText = formatTags(); // 存储当前的格式化文本
+        formattedTextDisplay.value = lastFormattedText;
     }
     
     function copyTagsToClipboard() {
-        const formattedString = formatTags();
-        if (!formattedString) return; // 如果没有内容则不复制
-        
-        // 总是更新文本框内容
-        formattedTextDisplay.value = formattedString;
-
-        // 如果文本框未显示，则切换到文本框视图
-        if (!isTextBoxVisible) {
-            toggleView(); 
+        // 确保清除之前的计时器，防止消息被覆盖或提前恢复
+        if (copyMessageTimeoutId) {
+            clearTimeout(copyMessageTimeoutId);
         }
 
+        const formattedString = formatTags(); // 获取当前格式化的标签字符串
+        if (!formattedString) {
+            formattedTextDisplay.value = '没有标签可供复制！'; // 提示用户没有标签
+            formattedTextDisplay.style.color = '#FFA500'; // 橙色提示
+
+            copyMessageTimeoutId = setTimeout(() => {
+                formattedTextDisplay.value = lastFormattedText; // 恢复原文本
+                formattedTextDisplay.style.color = '#00ff00'; // 恢复绿色
+            }, 3000); // 3秒后恢复
+
+            return; // 没有内容直接返回
+        }
+        
         navigator.clipboard.writeText(formattedString).then(() => {
-            // 复制成功，不做额外提示，通过文本框显示即为反馈
+            formattedTextDisplay.value = '复制成功！'; // 复制成功提示
+            formattedTextDisplay.style.color = '#00ff00'; // 绿色成功提示
+
+            copyMessageTimeoutId = setTimeout(() => {
+                formattedTextDisplay.value = lastFormattedText; // 恢复原文本
+                formattedTextDisplay.style.color = '#00ff00'; // 恢复绿色
+            }, 3000); // 3秒后恢复
+
         }).catch(err => {
             console.error('复制失败', err);
-            alert('复制失败！'); // 复制失败时仍使用 alert 提示
+            formattedTextDisplay.value = '复制失败！'; // 复制失败提示
+            formattedTextDisplay.style.color = '#FF0000'; // 红色失败提示
+
+            copyMessageTimeoutId = setTimeout(() => {
+                formattedTextDisplay.value = lastFormattedText; // 恢复原文本
+                formattedTextDisplay.style.color = '#00ff00'; // 恢复绿色
+            }, 3000); // 3秒后恢复
         });
     }
 
-    // 切换视图函数
-    function toggleView() {
-        isTextBoxVisible = !isTextBoxVisible; // 切换可见状态
-        const icon = viewToggleBtn.querySelector('i'); // 获取按钮图标
+    // --- 功能模块: 外观与主题 (自适应) ---
+    function applyThemeFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const theme = urlParams.get('__theme');
+        const html = document.documentElement;
 
-        if (isTextBoxVisible) {
-            formattedTextBox.classList.remove('hidden'); // 显示文本框
-            selectedTagsContainer.classList.add('hidden'); // 隐藏已选标签容器
-            icon.classList.remove('fa-tags');
-            icon.classList.add('fa-file-lines'); // 显示文本框时显示文件图标
-            updateFormattedTextBox(); // 切换到文本视图时，确保文本框内容最新
-        } else {
-            formattedTextBox.classList.add('hidden'); // 隐藏文本框
-            selectedTagsContainer.classList.remove('hidden'); // 显示已选标签容器
-            icon.classList.remove('fa-file-lines');
-            icon.classList.add('fa-tags'); // 显示标签容器时显示标签图标
-        }
-    }
-
-    // --- 功能模块: 外观与主题 ---
-    function applyTheme(theme) {
-        const html = document.documentElement; // 获取 HTML 根元素
-        const icon = themeToggleBtn.querySelector('i'); // 获取主题切换按钮的图标
         if (theme === 'dark') {
-            html.classList.add('dark'); // 添加 'dark' 类
-            html.classList.remove('light'); // 移除 'light' 类
-            icon.classList.remove('fa-moon'); // 移除月亮图标
-            icon.classList.add('fa-sun'); // 添加太阳图标
+            html.setAttribute('data-theme', 'dark');
         } else {
-            html.classList.add('light'); // 添加 'light' 类
-            html.classList.remove('dark'); // 移除 'dark' 类
-            icon.classList.remove('fa-sun'); // 移除太阳图标
-            icon.classList.add('fa-moon'); // 添加月亮图标
+            html.setAttribute('data-theme', 'light');
         }
-        localStorage.setItem('danbooru-tag-theme', theme); // 将当前主题保存到本地存储
-    }
-    
-    function toggleTheme() {
-        const currentTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark'; // 获取当前主题
-        applyTheme(currentTheme); // 应用新主题
     }
 
     // --- 启动应用 ---
