@@ -124,40 +124,37 @@
             background-color: #4ea1e1;
         }
 
-        /* 文本框父容器样式 */
+        /* 文本框父容器样式 (现在不显示，但样式保留以防需要) */
         #formatted-text-box {
-            background-color: #000000; /* 修改为纯黑色 */
+            background-color: #000000;
         }
-        /* 文本区域样式 */
+        /* 文本区域样式 (现在不显示，但样式保留以防需要) */
         #formatted-text-display {
-            height: 100%; /* 使文本区域填满其父容器 */
-            min-height: 105px; /* 最小高度设置为135px */
-            background-color: #000000 !important; /* 命令风格的纯黑色背景 */
-            color: #00ff00 !important; /* 命令风格的亮绿色文本 */
-            /* 隐藏滚动条但保留滚动功能 */
-            overflow: auto; /* 允许滚动 */
-            scrollbar-width: none; /* 针对 Firefox */
+            height: 100%;
+            min-height: 105px;
+            background-color: #000000 !important;
+            color: #00ff00 !important;
+            overflow: auto;
+            scrollbar-width: none;
         }
-        /* Webkit (Chrome, Safari) 浏览器滚动条隐藏 */
         #formatted-text-display::-webkit-scrollbar {
-            display: none; /* 隐藏滚动条 */
+            display: none;
         }
 
         /* 可拖拽浮动容器样式 */
         #draggable-container {
             position: fixed;
-            /* top 和 left 将由JS动态计算 */
-            width: 960px; /* 固定宽度 */
-            max-height: calc(100vh - 160px); /* 限制最大高度，留出顶部和底部空间 */
+            width: 960px;
+            max-height: calc(100vh - 160px);
             background-color: var(--bg-color);
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             z-index: 1000;
-            display: none; /* 默认隐藏 */
+            display: none;
             flex-direction: column;
-            overflow: hidden; /* 内部滚动条控制 */
-            resize: vertical; /* 允许垂直调整大小 */
-            min-height: 300px; /* 最小高度 */
+            overflow: hidden;
+            resize: vertical;
+            min-height: 300px;
         }
         #draggable-handle {
             cursor: grab;
@@ -178,20 +175,19 @@
         /* 悬浮球样式 */
         #float-ball {
             position: fixed;
-            /* top 和 left 将由JS动态计算，right 属性不再使用 */
             width: 50px;
             height: 50px;
             background-color: var(--btn-active-bg);
             color: var(--btn-active-text);
             border-radius: 50%;
-            display: flex;
+            display: flex; /* Changed from none to flex by default, will be controlled by JS */
             justify-content: center;
             align-items: center;
-            cursor: grab; /* 变为可拖拽图标 */
+            cursor: grab;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
             z-index: 1001;
             transition: background-color 0.3s, transform 0.2s;
-            display: none; /* 默认隐藏 */
+            /* Removed 'display: none;' here, JS will explicitly set it to 'flex' */
         }
         #float-ball:hover {
             transform: scale(1.05);
@@ -200,210 +196,270 @@
             cursor: grabbing;
         }
     </style>
+
 </head>
 <body class="flex justify-center items-center min-h-screen font-sans">
+    <script>
+    // 声明 appRootInstance 在外部作用域，以便在 initializeTagAssistantLogic 内部和外部都可以访问
+    let appRootInstance;
 
-    <div id="app-container" class="w-[1000px] flex flex-col p-4 space-y-3 overflow-hidden min-h-[700px]">
+// 将所有核心逻辑封装到一个函数中
+function initializeTagAssistantLogic() {
+    console.log("initializeTagAssistantLogic started.");
+    // ==================== 样式配置 ====================
+    // Style is already in <head>, so no need to append it again here dynamically.
+    // If it were not in the <head>, this part would be needed:
+    /*
+    const style = document.createElement('style');
+    style.textContent = `...CSS content...`;
+    document.head.appendChild(style);
+    */
 
-        <div id="loading-container" class="flex flex-col items-center justify-center h-full">
-            <div class="text-lg mb-4">加载 Danbooru 标签数据</div>
-            <div class="w-full max-w-lg flex flex-col space-y-3">
-                <div class="flex items-center space-x-2">
-                    <input type="text" id="url-input" class="input-control w-full p-2 rounded-lg" placeholder="在此处粘贴CSV文件的URL">
-                    <button id="load-default-url-btn" class="btn px-4 py-2 rounded-lg flex items-center space-x-2 flex-shrink-0">
-                        <i class="fa-solid fa-cloud-arrow-down"></i>
-                        <span id="countdown-text">默认URL</span>
-                    </button>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <button id="load-url-btn" class="btn px-4 py-2 rounded-lg flex-shrink-0">加载网络文件</button>
-                    <div class="text-sm">或</div>
-                    <label for="local-file-input" id="local-file-label" class="btn px-4 py-2 rounded-lg flex items-center space-x-2 cursor-pointer">
-                        <i class="fa-solid fa-folder-open"></i>
-                        <span>加载本地文件</span>
-                    </label>
-                    <input type="file" id="local-file-input" class="hidden" accept=".csv">
-                </div>
-            </div>
-            <div id="loading-status" class="mt-4 text-sm h-5"></div>
-        </div>
-
-        <div id="main-content" class="hidden flex-col h-full space-y-3">
-            
-            <div id="formatted-text-box" class="p-2 rounded-lg h-[137px]">
-                <textarea id="formatted-text-display" class="w-full h-full input-control rounded-md resize-none" readonly></textarea>
-            </div>
-            <div id="draggable-container" class="flex flex-col space-y-3 p-4">
-                <div id="draggable-handle" class="flex-shrink-0">拖拽此处</div>
-
-                <div id="selected-tags-container" class="p-2 rounded-lg h-[125px] flex flex-wrap gap-2 content-start overflow-y-auto"> </div>
-
-                <div class="flex-shrink-0 flex items-center gap-3">
-                    <div class="relative flex-grow">
-                        <input type="text" id="search-input" placeholder="搜索标签 (英文, 中文, 别名, 自定义分类...)" class="input-control w-full p-2 pl-4 rounded-lg h-10">
-                        <button id="reset-search-btn" class="absolute right-2 top-1/2 -translate-y-1/2 p-1" title="清空搜索并重置类别"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                    
-                    <input id="weight-input" type="number" value="1.1" step="0.1" class="input-control p-2 w-20 rounded-lg h-10 hidden">
-                    <select id="format-selector" class="input-control p-2 rounded-lg h-10">
-                        <option value="default">默认 (逗号+空格)</option>
-                        <option value="spaces">下划线转空格</option>
-                        <option value="weighted">权重 (tag:1.1)</option>
-                        <option value="full">全格式化 (空格, 权重)</option>
-                    </select>
-                    <button id="copy-btn" class="btn p-2 rounded-lg h-10 w-10 flex-shrink-0" title="复制"><i class="fa-solid fa-copy"></i></button>
-                    
-                    <button id="nsfw-filter-btn" class="btn p-2 rounded-lg h-10 w-10 flex-shrink-0 active" title="NSFW过滤 (内置分类-禁)"><i class="fa-solid fa-eye-slash"></i></button>
-                    <button id="clear-all-btn" class="btn p-2 rounded-lg h-10 w-10" title="清空已选"><i class="fa-solid fa-trash-can"></i></button>
-                    <button id="reload-btn" class="btn p-2 rounded-lg h-10 w-10" title="重新加载"><i class="fa-solid fa-rotate-right"></i></button>
-                </div>
-
-                <div class="flex-shrink-0 flex gap-2">
-                    <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md active" data-category="-1">全部</button>
-                    <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="0" title="General">通用</button>
-                    <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="1" title="Artist">作者</button>
-                    <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="3" title="Copyright">版权</button>
-                    <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="4" title="Character">角色</button>
-                    <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="5" title="Meta">元数据</button>
-                    <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="6" title="Kontext Command">Kontext</button>
-                    <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="人物数量">人物数量</button>
-                    <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="画质">画质</button>
-                    <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="反向">反向</button>
-                </div>
-                <div id="tag-display-container" class="flex-grow grid grid-cols-8 grid-rows-5 gap-2 overflow-hidden p-2">
-                </div>
-                <div id="pagination-container" class="flex-shrink-0 flex justify-center items-center gap-4">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="float-ball">
-        <i class="fa-solid fa-tags"></i>
-    </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
 
     // --- 全局状态和常量 ---
     const DEFAULT_CSV_URL = 'https://raw.githubusercontent.com/xhoxye/BooruTagCart/refs/heads/main/assets/danbooru_all.csv';
     const TAGS_PER_PAGE = 40; // 每页显示的标签数量
-    const CATEGORY_MAP = {
-        0: '通用', 1: '作者', 3: '版权', 4: '角色', 5: '元数据',
-        6: 'Kontext指令', 7: '内置分类1', 8: '内置分类2'
+    
+    // 全局UI文本配置
+    const uiTexts = {
+        searchInputPlaceholder: {
+            zh: '搜索标签 (英文, 中文, 别名, 自定义分类...)',
+            en: 'Search tags (English, Chinese, aliases, custom categories...)'
+        },
+        draggableHandleText: {
+            zh: '拖拽此处',
+            en: 'Drag Here'
+        },
+        formatOptions: [
+            { zh: '默认 (逗号+空格)', en: 'Default (comma + space)' },
+            { zh: '下划线转空格', en: 'Underscore to space' },
+            { zh: '权重 (tag:1.1)', en: 'Weighted (tag:1.1)' },
+            { zh: '全格式化 (空格, 权重)', en: 'Full format (space, weighted)' }
+        ],
+        buttonTitles: {
+            resetSearch: { zh: '清空搜索并重置类别', en: 'Clear search & reset categories' },
+            copy: { zh: '复制', en: 'Copy' },
+            nsfwFilter: { zh: 'NSFW过滤 (内置分类-禁)', en: 'NSFW Filter (Built-in-NSFW-Prohibited)' },
+            clearAll: { zh: '清空已选', en: 'Clear All Selected' },
+            floatBall: { zh: '点击显示标签助手', en: 'Click to show Tag Assistant' },
+            toggleLanguage: { zh: '切换显示语言', en: 'Toggle Display Language' }
+        },
+        categoryFilterNames: {
+            '-1': { zh: '全部', en: 'All' },
+            '0': { zh: '通用', en: 'General' },
+            '1': { zh: '作者', en: 'Artist' },
+            '3': { zh: '版权', en: 'Copyright' },
+            '4': { zh: '角色', en: 'Character' },
+            '5': { zh: '元数据', en: 'Meta' },
+            '6': { zh: 'Kontext', en: 'Kontext' }
+        },
+        customCategoryFilterNames: {
+            '人物数量': { zh: '人物数量', en: 'Number of People' },
+            '画质': { zh: '画质', en: 'Quality' },
+            '反向': { zh: '反向', en: 'Negative' }
+        },
+        categoryMap: { // 用于生成标签标题的映射
+            0: { zh: '通用', en: 'General' }, 1: { zh: '作者', en: 'Artist' }, 3: { zh: '版权', en: 'Copyright' }, 4: { zh: '角色', en: 'Character' }, 5: { zh: '元数据', en: 'Meta' },
+            6: { zh: 'Kontext指令', en: 'Kontext Command' }, 7: { zh: '内置分类1', en: 'Built-in Category 1' }, 8: { zh: '内置分类2', en: 'Built-in Category 2' }
+        },
+        tagTitleDefaults: { // 标签标题中的默认文本
+            en: {
+                noTranslation: 'None',
+                noAliases: 'None',
+                noCustomCategory: 'None',
+                unknownCategory: 'Unknown Category'
+            },
+            zh: {
+                noTranslation: '无',
+                noAliases: '无',
+                noCustomCategory: '无',
+                unknownCategory: '未知类别'
+            }
+        }
     };
+
+    // 重新定义 CATEGORY_MAP 以使用 uiTexts 中的数据
+    const CATEGORY_MAP = Object.keys(uiTexts.categoryMap).reduce((acc, key) => {
+        acc[key] = uiTexts.categoryMap[key].zh; // 初始默认为中文
+        return acc;
+    }, {});
     
     let allTags = []; // 所有标签数据
     let filteredTags = []; // 经过筛选的标签
     let selectedTags = []; // 已选中的标签
     let currentPage = 1; // 当前页码
 
-    let countdownInterval; // 倒计时计时器
-    let countdown = 10; // 倒计时初始值
     let debounceTimer; // 防抖计时器
     let activeCategoryFilter = -1; // 当前激活的分类过滤器（-1表示全部）
     let isNsfwFilterActive = true; // NSFW 过滤是否激活（默认为激活）
     let activeCustomCategoryFilter = null; // 当前激活的自定义分类过滤器（例如 '人物数量'）
-    
-    let lastFormattedText = ''; // 新增：存储最后一次格式化后的文本
-    let copyMessageTimeoutId; // 新增：存储复制成功/失败消息的计时器ID
+    let displayEnglishOnly = false; // 控制标签文本和UI元素显示中英文
 
-    // --- DOM 元素引用 ---
-    const loadingContainer = document.getElementById('loading-container');
-    const mainContent = document.getElementById('main-content');
-    const urlInput = document.getElementById('url-input');
-    const loadUrlBtn = document.getElementById('load-url-btn');
-    const loadDefaultUrlBtn = document.getElementById('load-default-url-btn');
-    const countdownText = document.getElementById('countdown-text');
-    const localFileInput = document.getElementById('local-file-input');
-    const localFileLabel = document.getElementById('local-file-label'); 
-    const loadingStatus = document.getElementById('loading-status');
-    const selectedTagsContainer = document.getElementById('selected-tags-container');
-    const formattedTextBox = document.getElementById('formatted-text-box'); // 格式化文本框的父容器
-    const formattedTextDisplay = document.getElementById('formatted-text-display'); // 格式化文本显示的 <textarea>
-    const tagDisplayContainer = document.getElementById('tag-display-container');
-    const searchInput = document.getElementById('search-input');
-    const resetSearchBtn = document.getElementById('reset-search-btn');
-    const nsfwFilterBtn = document.getElementById('nsfw-filter-btn');
-    const reloadBtn = document.getElementById('reload-btn');
-    const clearAllBtn = document.getElementById('clear-all-btn');
-    const copyBtn = document.getElementById('copy-btn');
-    const formatSelector = document.getElementById('format-selector');
-    const weightInput = document.getElementById('weight-input');
-    const paginationContainer = document.getElementById('pagination-container');
-    const tagFilterBtns = document.querySelectorAll('.tag-filter-btn');
-    const customCategoryFilterBtns = document.querySelectorAll('.custom-category-filter-btn');
-
-    // 新增DOM元素引用
-    const floatBall = document.getElementById('float-ball');
-    const draggableContainer = document.getElementById('draggable-container');
-    const draggableHandle = document.getElementById('draggable-handle');
+    // --- DOM 元素引用 (将在 init 中动态创建并引用) ---
+    // 这里不再是全局变量，而是在 init 内部声明并赋值，
+    // 以确保它们引用的是动态创建的元素。
+    // 但是，为了后续函数能够访问，它们需要作为外部变量声明
+    // let appRoot; // 移到外部作用域
+    let selectedTagsContainer;
+    let tagDisplayContainer;
+    let searchInput;
+    let resetSearchBtn;
+    let nsfwFilterBtn;
+    let clearAllBtn;
+    let copyBtn;
+    let formatSelector;
+    let weightInput;
+    let paginationContainer;
+    let tagFilterBtns;
+    let customCategoryFilterBtns;
+    let toggleLanguageBtn; 
+    let floatBall;
+    let draggableContainer;
+    let draggableHandle;
 
     // --- 初始化函数 ---
     function init() {
-        urlInput.value = DEFAULT_CSV_URL;
-        applyThemeFromUrl(); // 根据URL参数应用主题
-        setupEventListeners();
-        startCountdown();
-        if (isNsfwFilterActive) {
-            nsfwFilterBtn.classList.add('active');
-        }
-        // 初始化 Sortable.js，用于拖拽已选标签
-        new Sortable(selectedTagsContainer, {
-            animation: 150, // 动画时间
-            ghostClass: 'ghost-class', // 拖拽时的虚影类
-            onEnd: (evt) => {
-                const movedTag = selectedTags.splice(evt.oldIndex, 1)[0];
-                selectedTags.splice(evt.newIndex, 0, movedTag);
-                updateFormattedTextBox(); // 拖拽后更新文本框
-            }
-        });
-        // 初始状态设置：formattedTextBox 显示，draggableContainer 隐藏
-        formattedTextBox.classList.remove('hidden'); 
-        draggableContainer.style.display = 'none'; // 确保初始化时隐藏
-        floatBall.style.display = 'none'; // 确保初始化时隐藏
+        console.log("init() started.");
+        // 动态创建 appRoot
+        appRootInstance = document.createElement('div'); // 赋值给外部作用域的变量
+        appRootInstance.id = 'app-root';
+        appRootInstance.className = 'w-[1000px] flex flex-col p-4 space-y-3 overflow-hidden min-h-[700px]';
 
-        // 1. 初始化时显示提示信息
-        formattedTextDisplay.value = '点击悬浮球进行标签选取'; 
-        formattedTextDisplay.style.color = '#FFA500'; // 设置为橙色提示文本
-        // 移除 init 阶段对 updateFormattedTextBox() 的调用，因为它会覆盖初始提示
-        // updateFormattedTextBox(); 
+        // 创建可拖拽容器 (主UI界面)
+        draggableContainer = document.createElement('div');
+        draggableContainer.id = 'draggable-container';
+        draggableContainer.className = 'flex flex-col space-y-3 p-4';
+        draggableContainer.style.display = 'none'; // 默认隐藏
+        // 附加到 appRoot
+        
+        draggableHandle = document.createElement('div');
+        draggableHandle.id = 'draggable-handle';
+        draggableHandle.className = 'flex-shrink-0';
+        draggableContainer.appendChild(draggableHandle);
+
+        selectedTagsContainer = document.createElement('div');
+        selectedTagsContainer.id = 'selected-tags-container';
+        selectedTagsContainer.className = 'p-2 rounded-lg h-[125px] flex flex-wrap gap-2 content-start overflow-y-auto';
+        draggableContainer.appendChild(selectedTagsContainer);
+
+        const controlBar = document.createElement('div');
+        controlBar.className = 'flex-shrink-0 flex items-center gap-3';
+        draggableContainer.appendChild(controlBar);
+
+        const searchWrapper = document.createElement('div');
+        searchWrapper.className = 'relative flex-grow';
+        controlBar.appendChild(searchWrapper);
+
+        searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.id = 'search-input';
+        searchInput.className = 'input-control w-full p-2 pl-4 rounded-lg h-10';
+        searchWrapper.appendChild(searchInput);
+
+        resetSearchBtn = document.createElement('button');
+        resetSearchBtn.id = 'reset-search-btn';
+        resetSearchBtn.className = 'absolute right-2 top-1/2 -translate-y-1/2 p-1';
+        resetSearchBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        searchWrapper.appendChild(resetSearchBtn);
+
+        weightInput = document.createElement('input');
+        weightInput.id = 'weight-input';
+        weightInput.type = 'number';
+        weightInput.value = '1.1';
+        weightInput.step = '0.1';
+        weightInput.className = 'input-control p-2 w-20 rounded-lg h-10 hidden';
+        controlBar.appendChild(weightInput);
+
+        formatSelector = document.createElement('select');
+        formatSelector.id = 'format-selector';
+        formatSelector.className = 'input-control p-2 rounded-lg h-10';
+        formatSelector.innerHTML = `
+            <option value="default"></option>
+            <option value="spaces"></option>
+            <option value="weighted"></option>
+            <option value="full"></option>
+        `;
+        controlBar.appendChild(formatSelector);
+
+        copyBtn = document.createElement('button');
+        copyBtn.id = 'copy-btn';
+        copyBtn.className = 'btn p-2 rounded-lg h-10 w-10 flex-shrink-0';
+        copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i>';
+        controlBar.appendChild(copyBtn);
+
+        nsfwFilterBtn = document.createElement('button');
+        nsfwFilterBtn.id = 'nsfw-filter-btn';
+        nsfwFilterBtn.className = 'btn p-2 rounded-lg h-10 w-10 flex-shrink-0 active';
+        nsfwFilterBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+        controlBar.appendChild(nsfwFilterBtn);
+        
+        // 中英文切换按钮移动到 nsfwFilterBtn 右侧
+        toggleLanguageBtn = document.createElement('button');
+        toggleLanguageBtn.id = 'toggle-language-btn';
+        toggleLanguageBtn.className = 'btn p-2 rounded-lg h-10 w-10 flex-shrink-0';
+        toggleLanguageBtn.innerHTML = '<i class="fa-solid fa-language"></i>';
+        controlBar.appendChild(toggleLanguageBtn); // 附加到 controlBar
+
+        clearAllBtn = document.createElement('button');
+        clearAllBtn.id = 'clear-all-btn';
+        clearAllBtn.className = 'btn p-2 rounded-lg h-10 w-10';
+        clearAllBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+        controlBar.appendChild(clearAllBtn); // 附加到 controlBar
+
+
+        const filterBtnsContainer = document.createElement('div');
+        filterBtnsContainer.className = 'flex-shrink-0 flex gap-2';
+        draggableContainer.appendChild(filterBtnsContainer);
+
+        filterBtnsContainer.innerHTML = `
+            <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md active" data-category="-1"></button>
+            <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="0"></button>
+            <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="1"></button>
+            <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="3"></button>
+            <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="4"></button>
+            <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="5"></button>
+            <button class="tag-filter-btn btn px-3 py-1 text-sm rounded-md" data-category="6"></button>
+            <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="人物数量"></button>
+            <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="画质"></button>
+            <button class="custom-category-filter-btn btn px-3 py-1 text-sm rounded-md" data-custom-category="反向"></button>
+        `;
+        tagFilterBtns = filterBtnsContainer.querySelectorAll('.tag-filter-btn');
+        customCategoryFilterBtns = filterBtnsContainer.querySelectorAll('.custom-category-filter-btn');
+
+
+        tagDisplayContainer = document.createElement('div');
+        tagDisplayContainer.id = 'tag-display-container';
+        tagDisplayContainer.className = 'flex-grow grid grid-cols-8 grid-rows-5 gap-2 overflow-hidden p-2';
+        draggableContainer.appendChild(tagDisplayContainer);
+
+        paginationContainer = document.createElement('div');
+        paginationContainer.id = 'pagination-container';
+        paginationContainer.className = 'flex-shrink-0 flex justify-center items-center gap-4';
+        draggableContainer.appendChild(paginationContainer);
+
+        // 创建悬浮球
+        floatBall = document.createElement('div');
+        floatBall.id = 'float-ball';
+        floatBall.innerHTML = '<i class="fa-solid fa-tags"></i>';
+        floatBall.style.display = 'flex'; // 默认显示，CSS中的 display: none; 已移除
+        // 附加到 appRoot
+        
+        // 将 draggableContainer 和 floatBall 添加到动态创建的 appRootInstance
+        appRootInstance.appendChild(draggableContainer);
+        appRootInstance.appendChild(floatBall);
+        console.log("init() completed, appRootInstance and floatBall created.");
     }
 
     // --- 功能模块: 事件监听 ---
     function setupEventListeners() {
-        loadUrlBtn.addEventListener('click', () => {
-            interruptCountdown(); // 中断倒计时
-            const url = urlInput.value.trim();
-            if (url) {
-                loadCSV(url);
-            } else {
-                loadingStatus.textContent = '请输入有效的URL';
-            }
-        });
-
-        loadDefaultUrlBtn.addEventListener('click', () => {
-             interruptCountdown(); // 中断倒计时
-             urlInput.value = DEFAULT_CSV_URL; // 仅设置默认URL，不立即加载
-        });
-
-        localFileLabel.addEventListener('click', interruptCountdown); // 点击本地文件标签时中断倒计时
-        localFileInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                loadCSV(file);
-            }
-        });
-        
-        urlInput.addEventListener('input', interruptCountdown); // 用户输入URL时中断倒计时
-        reloadBtn.addEventListener('click', () => location.reload()); // 重新加载页面
         searchInput.addEventListener('input', () => {
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => applyFiltersAndRender(), 300); // 搜索输入防抖
+            debounceTimer = setTimeout(() => applyFiltersAndRender(), 300);
         });
+
         resetSearchBtn.addEventListener('click', () => {
-            searchInput.value = ''; // 清空搜索框
-            activeCategoryFilter = -1; // 重置分类过滤器为“全部”
+            searchInput.value = '';
+            activeCategoryFilter = -1; 
             tagFilterBtns.forEach(b => {
                 if (parseInt(b.dataset.category, 10) === -1) {
                     b.classList.add('active');
@@ -411,59 +467,59 @@ document.addEventListener('DOMContentLoaded', () => {
                     b.classList.remove('active');
                 }
             });
-            activeCustomCategoryFilter = null; // 清空自定义分类过滤器
-            customCategoryFilterBtns.forEach(b => b.classList.remove('active')); // 移除自定义分类按钮的激活状态
+            activeCustomCategoryFilter = null; 
+            customCategoryFilterBtns.forEach(b => b.classList.remove('active'));
 
-            applyFiltersAndRender(); // 应用过滤器并重新渲染
+            applyFiltersAndRender();
         });
 
         nsfwFilterBtn.addEventListener('click', () => {
-            isNsfwFilterActive = !isNsfwFilterActive; // 切换 NSFW 过滤器状态
-            nsfwFilterBtn.classList.toggle('active', isNsfwFilterActive); // 切换按钮激活样式
-            applyFiltersAndRender(); // 应用过滤器并重新渲染
+            isNsfwFilterActive = !isNsfwFilterActive;
+            nsfwFilterBtn.classList.toggle('active', isNsfwFilterActive);
+            applyFiltersAndRender();
         });
 
         clearAllBtn.addEventListener('click', () => {
-            selectedTags = []; // 清空已选标签数组
-            renderSelectedTags(); // 渲染已选标签
-            renderTags(); // 重新渲染标签显示区域（以更新选中状态）
-            updateFormattedTextBox(); // 清空已选时更新文本框
+            selectedTags = []; 
+            renderSelectedTags(); 
+            renderTags(); 
         });
-        copyBtn.addEventListener('click', copyTagsToClipboard); // 复制标签到剪贴板
+
+        copyBtn.addEventListener('click', copyTagsToClipboard); 
         formatSelector.addEventListener('change', () => {
-            // 根据格式选择器显示/隐藏权重输入框
             weightInput.classList.toggle('hidden', !['weighted', 'full'].includes(formatSelector.value));
-            updateFormattedTextBox(); // 格式变化时更新文本框
         });
-        weightInput.addEventListener('input', () => { // 权重变化时更新文本框
-            updateFormattedTextBox();
+
+        weightInput.addEventListener('input', () => { 
+            // 权重变化时不再更新文本框，因为文本框已移除
         });
 
         tagFilterBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                tagFilterBtns.forEach(b => b.classList.remove('active')); // 移除所有分类按钮的激活状态
-                btn.classList.add('active'); // 激活当前点击的按钮
-                activeCategoryFilter = parseInt(btn.dataset.category, 10); // 设置当前激活的分类过滤器
+                tagFilterBtns.forEach(b => b.classList.remove('active')); 
+                btn.classList.add('active');
+                activeCategoryFilter = parseInt(btn.dataset.category, 10);
                 
-                activeCustomCategoryFilter = null; // 清空自定义分类过滤器
-                customCategoryFilterBtns.forEach(b => b.classList.remove('active')); // 移除自定义分类按钮的激活状态
+                activeCustomCategoryFilter = null; 
+                customCategoryFilterBtns.forEach(b => b.classList.remove('active'));
 
-                applyFiltersAndRender(); // 应用过滤器并重新渲染
+                applyFiltersAndRender();
             });
         });
+
         customCategoryFilterBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const clickedCustomCategory = btn.dataset.customCategory;
 
                 if (activeCustomCategoryFilter === clickedCustomCategory) {
-                    activeCustomCategoryFilter = null; // 如果点击的是当前激活的自定义分类，则取消激活
+                    activeCustomCategoryFilter = null; 
                 } else {
-                    activeCustomCategoryFilter = clickedCustomCategory; // 否则激活当前点击的自定义分类
+                    activeCustomCategoryFilter = clickedCustomCategory; 
                 }
 
-                customCategoryFilterBtns.forEach(b => b.classList.remove('active')); // 移除所有自定义分类按钮的激活状态
+                customCategoryFilterBtns.forEach(b => b.classList.remove('active')); 
                 if (activeCustomCategoryFilter) {
-                    btn.classList.add('active'); // 如果有激活的自定义分类，则添加激活样式
+                    btn.classList.add('active'); 
                 }
 
                 tagFilterBtns.forEach(b => {
@@ -473,22 +529,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         b.classList.remove('active');
                     }
                 });
-                activeCategoryFilter = -1; // 将主分类过滤器设为“全部”
+                activeCategoryFilter = -1; 
 
-                applyFiltersAndRender(); // 应用过滤器并重新渲染
+                applyFiltersAndRender();
             });
         });
 
-        // 悬浮球点击事件 (现在它也变得可拖拽，所以点击和拖拽需要区分)
+        // 语言切换按钮事件监听
+        toggleLanguageBtn.addEventListener('click', () => {
+            displayEnglishOnly = !displayEnglishOnly; 
+            toggleLanguageBtn.classList.toggle('active', displayEnglishOnly); // 切换 active 状态
+            updateUIText(displayEnglishOnly ? 'en' : 'zh'); // 更新所有UI文本
+        });
+
+        // 悬浮球点击事件
         floatBall.addEventListener('mousedown', (e) => {
-            // 确保只在鼠标左键按下时开始拖拽或处理点击
             if (e.button !== 0) return; 
 
             let isFloatBallDragging = false;
             let offset = { x: e.clientX - floatBall.getBoundingClientRect().left, y: e.clientY - floatBall.getBoundingClientRect().top };
 
             const onMouseMove = (moveEvent) => {
-                // 如果鼠标移动距离超过一定阈值，则认为是拖拽
                 if (Math.abs(moveEvent.clientX - e.clientX) > 5 || Math.abs(moveEvent.clientY - e.clientY) > 5) {
                     isFloatBallDragging = true;
                 }
@@ -497,7 +558,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     let newX = moveEvent.clientX - offset.x;
                     let newY = moveEvent.clientY - offset.y;
 
-                    // 限制拖拽范围
                     const viewportWidth = window.innerWidth;
                     const viewportHeight = window.innerHeight;
                     const ballRect = floatBall.getBoundingClientRect();
@@ -509,7 +569,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     floatBall.style.left = `${newX}px`;
                     floatBall.style.top = `${newY}px`;
-                    floatBall.style.right = 'auto'; // 取消right属性，避免冲突
+                    floatBall.style.right = 'auto'; 
                 }
             };
 
@@ -518,16 +578,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.removeEventListener('mouseup', onMouseUp);
 
                 if (!isFloatBallDragging) {
-                    // 如果没有拖拽行为，认为是点击
                     if (draggableContainer.style.display === 'none' || draggableContainer.style.display === '') {
                         draggableContainer.style.display = 'flex';
-                        // 初始显示时设置位置
                         positionDraggableContainer();
                     } else {
                         draggableContainer.style.display = 'none';
                     }
                 }
-                isFloatBallDragging = false; // 重置拖拽状态
+                isFloatBallDragging = false; 
             };
 
             document.addEventListener('mousemove', onMouseMove);
@@ -539,14 +597,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let containerOffset = { x: 0, y: 0 };
 
         draggableHandle.addEventListener('mousedown', (e) => {
-            if (e.button !== 0) return; // 只响应鼠标左键
+            if (e.button !== 0) return; 
             isDraggingContainer = true;
             containerOffset = {
                 x: e.clientX - draggableContainer.getBoundingClientRect().left,
                 y: e.clientY - draggableContainer.getBoundingClientRect().top
             };
             draggableHandle.style.cursor = 'grabbing';
-            // 阻止文本选择
             e.preventDefault();
         });
 
@@ -556,12 +613,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let newX = e.clientX - containerOffset.x;
             let newY = e.clientY - containerOffset.y;
 
-            // 获取容器和视口边界
             const containerRect = draggableContainer.getBoundingClientRect();
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
 
-            // 限制拖拽范围
             if (newX < 0) newX = 0;
             if (newY < 0) newY = 0;
             if (newX + containerRect.width > viewportWidth) newX = viewportWidth - containerRect.width;
@@ -569,7 +624,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             draggableContainer.style.left = `${newX}px`;
             draggableContainer.style.top = `${newY}px`;
-            draggableContainer.style.transform = 'none'; // 拖拽时取消transform，使用left/top
+            draggableContainer.style.transform = 'none'; 
         });
 
         document.addEventListener('mouseup', () => {
@@ -579,171 +634,123 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 功能模块: 加载与解析 CSV ---
-    function startCountdown() {
-        countdown = 10;
-        countdownText.textContent = `默认URL (${countdown})`;
-        if (countdownInterval) {
-            clearInterval(countdownInterval); // 清除旧的计时器
-        }
-        countdownInterval = setInterval(() => {
-            countdown--;
-            countdownText.textContent = `默认URL (${countdown})`;
-            if (countdown <= 0) {
-                if (countdownInterval) { 
-                    clearInterval(countdownInterval); // 清除计时器
-                    countdownInterval = null;
-                    loadCSV(DEFAULT_CSV_URL); // 倒计时结束，加载默认URL
-                }
-            }
-        }, 1000);
-    }
-
-    function interruptCountdown() {
-        if (countdownInterval) {
-            clearInterval(countdownInterval); // 清除计时器
-            countdownInterval = null;
-            countdownText.textContent = '默认URL'; // 恢复按钮文本
-        }
-    }
-
     async function loadCSV(source) {
-        loadingStatus.textContent = '正在加载并解析CSV文件...';
-        allTags = []; // 清空所有标签
+        console.log("loadCSV started.");
+        allTags = []; 
 
         try {
             let csvData;
-            if (typeof source === 'string') { // 如果源是URL
-                loadingStatus.textContent = '正在从网络下载文件...';
+            if (typeof source === 'string') {
                 const response = await fetch(source);
                 if (!response.ok) {
                     throw new Error(`网络错误: ${response.status} ${response.statusText}`);
                 }
                 csvData = await response.text();
-                loadingStatus.textContent = '下载完成，正在解析...';
-            } else { // 如果源是文件对象
+            } else {
                 csvData = source;
             }
 
             Papa.parse(csvData, {
-                worker: true, // 使用 Web Worker 进行解析，避免阻塞主线程
-                header: false, // CSV 文件没有头部
-                encoding: "UTF-8", // 指定编码
-                step: (row) => { // 逐行处理数据
+                worker: true, 
+                header: false, 
+                encoding: "UTF-8", 
+                step: (row) => { 
                     const data = row.data;
                     if (data.length >= 3 && data[0]) {
                         allTags.push({
-                            name: data[0].trim(), // 标签名（英文）
-                            category: parseInt(data[1], 10), // 类别
-                            count: parseInt(data[2], 10), // 帖子数量
-                            aliases: data[3] || '', // 别名
-                            translation: data[4] || '', // 中文翻译
-                            customCategory: data[5] || '' // 自定义分类
+                            name: data[0].trim(), 
+                            category: parseInt(data[1], 10), 
+                            count: parseInt(data[2], 10), 
+                            aliases: data[3] || '', 
+                            translation: data[4] || '', 
+                            customCategory: data[5] || '' 
                         });
                     }
                 },
-                complete: () => { // 解析完成回调
-                    loadingStatus.textContent = `加载完成！共 ${allTags.length} 个标签。`;
-                    setTimeout(() => {
-                        loadingContainer.classList.add('hidden'); // 隐藏加载容器
-                        mainContent.classList.remove('hidden'); // 显示主内容
-                        mainContent.classList.add('flex'); // 添加 flex 布局
-                        
-                        // 加载完成后，计算并设置可拖拽容器和悬浮球的初始位置
-                        positionDraggableContainer();
-                        positionFloatBall(); // 新增：定位悬浮球
+                complete: () => { 
+                    console.log("loadCSV completed.");
+                    // 加载完成后，计算并设置可拖拽容器和悬浮球的初始位置
+                    positionDraggableContainer();
+                    positionFloatBall();
 
-                        floatBall.style.display = 'flex'; // 显示悬浮球
-                        applyFiltersAndRender(); // 应用过滤器并渲染标签
-                        updateFormattedTextBox(); // 加载完成后更新文本框以显示实际内容
-
-                        // 恢复文本颜色为绿色
-                        formattedTextDisplay.style.color = '#00ff00';
-
-                    }, 500);
+                    // floatBall.style.display = 'flex'; // This line is now redundant as it's set in init()
+ 
+                    applyFiltersAndRender(); 
+                    updateUIText(displayEnglishOnly ? 'en' : 'zh'); // 确保加载完成后UI文本也更新
                 },
-                error: (err) => { // 解析错误回调
-                    throw err;
+                error: (err) => { 
+                    console.error("加载或解析CSV时出错:", err);
                 }
             });
         } catch (err) {
-            loadingStatus.textContent = `加载失败: ${err.message}`;
             console.error("加载或解析CSV时出错:", err);
         }
     }
 
     // 函数：定位可拖拽容器
     function positionDraggableContainer() {
-        const textBoxRect = formattedTextBox.getBoundingClientRect();
-        // 计算初始 top 位置：文本框底部 + 20px
-        const initialTop = textBoxRect.bottom + 20; 
-        
-        // 计算初始 left 位置：居中
-        const containerWidth = draggableContainer.offsetWidth; // 获取容器宽度
+        // 计算初始 left/top 位置：居中
+        const containerWidth = draggableContainer.offsetWidth; 
+        const containerHeight = draggableContainer.offsetHeight;
         const initialLeft = (window.innerWidth - containerWidth) / 2;
+        const initialTop = (window.innerHeight - containerHeight) / 2;
 
         draggableContainer.style.top = `${initialTop}px`;
         draggableContainer.style.left = `${initialLeft}px`;
-        draggableContainer.style.transform = 'none'; // 确保没有 transform 干扰
+        draggableContainer.style.transform = 'none'; 
     }
 
     // 新增函数：定位悬浮球
     function positionFloatBall() {
-        const textBoxRect = formattedTextBox.getBoundingClientRect();
-        // 悬浮球顶部与文本框顶部对齐
-        const floatBallTop = textBoxRect.top; 
-        // 悬浮球左侧位于文本框右侧外20px
-        const floatBallLeft = textBoxRect.right + 20;
-
-        floatBall.style.top = `${floatBallTop}px`;
-        floatBall.style.left = `${floatBallLeft}px`;
-        floatBall.style.right = 'auto'; // 确保 right 属性被覆盖
+        floatBall.style.top = `20px`; 
+        floatBall.style.left = `20px`;
+        floatBall.style.right = 'auto'; 
     }
     
     // --- 功能模块: 渲染与UI更新 ---
     function renderTags() {
-        tagDisplayContainer.innerHTML = ''; // 清空标签显示容器
+        tagDisplayContainer.innerHTML = ''; 
         const startIndex = (currentPage - 1) * TAGS_PER_PAGE;
-        const tagsToRender = filteredTags.slice(startIndex, startIndex + TAGS_PER_PAGE); // 获取当前页要渲染的标签
+        const tagsToRender = filteredTags.slice(startIndex, startIndex + TAGS_PER_PAGE); 
 
         tagsToRender.forEach(tag => {
             const tagEl = document.createElement('div');
-            // 显示中文翻译，如果没有则显示英文名并替换下划线
-            const displayText = tag.translation ? tag.translation : tag.name.replace(/_/g, ' ');
+            // 根据 displayEnglishOnly 状态决定显示文本
+            const displayText = displayEnglishOnly ? tag.name.replace(/_/g, ' ') : (tag.translation ? tag.translation : tag.name.replace(/_/g, ' '));
             
             tagEl.className = 'tag-item tag-interactive px-2 py-1 rounded-md cursor-pointer text-xs flex items-center justify-center';
             
-            tagEl.dataset.category = tag.category; // 设置数据属性以便样式和过滤
-            tagEl.dataset.tagName = tag.name; // 存储英文标签名
-            tagEl.title = generateTagTitle(tag); // 设置悬浮提示
+            tagEl.dataset.category = tag.category; 
+            tagEl.dataset.tagName = tag.name; 
+            tagEl.title = generateTagTitle(tag); 
 
             const textSpan = document.createElement('span');
             textSpan.textContent = displayText;
-            textSpan.style.overflow = 'hidden'; // 隐藏溢出内容
-            textSpan.style.whiteSpace = 'nowrap'; // 不换行
-            textSpan.style.textOverflow = 'ellipsis'; // 文本溢出显示省略号
-            textSpan.style.minWidth = '0'; // 允许文本收缩
+            textSpan.style.overflow = 'hidden'; 
+            textSpan.style.whiteSpace = 'nowrap'; 
+            textSpan.style.textOverflow = 'ellipsis'; 
+            textSpan.style.minWidth = '0'; 
             tagEl.appendChild(textSpan);
 
-            // 如果标签已选中，添加 'selected' 类
             if (selectedTags.some(st => st.name === tag.name)) {
                 tagEl.classList.add('selected');
             }
-            tagEl.addEventListener('click', () => toggleTagSelection(tag)); // 点击切换选中状态
+            tagEl.addEventListener('click', () => toggleTagSelection(tag)); 
             tagDisplayContainer.appendChild(tagEl);
         });
     }
 
     function renderSelectedTags() {
-        selectedTagsContainer.innerHTML = ''; // 清空已选标签容器
+        selectedTagsContainer.innerHTML = ''; 
         selectedTags.forEach(tag => {
             const tagEl = document.createElement('div');
-            // 显示中文翻译，如果没有则显示英文名并替换下划线
-            const displayText = tag.translation ? tag.translation : tag.name.replace(/_/g, ' ');
+            // 根据 displayEnglishOnly 状态决定显示文本
+            const displayText = displayEnglishOnly ? tag.name.replace(/_/g, ' ') : (tag.translation ? tag.translation : tag.name.replace(/_/g, ' '));
             
             tagEl.className = 'tag-item tag-interactive px-2 py-1 rounded-md cursor-pointer text-xs flex items-center justify-center min-w-[50px] max-w-[250px]';
             
-            tagEl.dataset.category = tag.category; // 设置数据属性
-            tagEl.title = generateTagTitle(tag); // 设置悬浮提示
+            tagEl.dataset.category = tag.category; 
+            tagEl.title = generateTagTitle(tag); 
 
             const textSpan = document.createElement('span');
             textSpan.textContent = displayText;
@@ -753,17 +760,16 @@ document.addEventListener('DOMContentLoaded', () => {
             textSpan.style.minWidth = '0';
             tagEl.appendChild(textSpan);
             
-            tagEl.addEventListener('click', () => toggleTagSelection(tag)); // 点击切换选中状态
+            tagEl.addEventListener('click', () => toggleTagSelection(tag)); 
             selectedTagsContainer.appendChild(tagEl);
         });
     }
     
     function renderPagination() {
-        paginationContainer.innerHTML = ''; // 清空分页容器
-        const totalPages = Math.ceil(filteredTags.length / TAGS_PER_PAGE); // 计算总页数
-        if (totalPages <= 1) return; // 如果只有一页或更少，则不显示分页
+        paginationContainer.innerHTML = ''; 
+        const totalPages = Math.ceil(filteredTags.length / TAGS_PER_PAGE); 
+        if (totalPages <= 1) return; 
 
-        // 创建分页按钮的辅助函数
         const createButton = (html, disabled, onClick) => {
             const btn = document.createElement('button');
             btn.innerHTML = html;
@@ -773,7 +779,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return btn;
         };
         
-        // 上一页按钮
         const prevBtn = createButton('<i class="fa-solid fa-chevron-left"></i>', currentPage === 1, () => {
             currentPage--;
             renderTags();
@@ -781,13 +786,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         paginationContainer.appendChild(prevBtn);
 
-        // 页码信息
         const pageInfo = document.createElement('span');
         pageInfo.textContent = `${currentPage} / ${totalPages}`;
         pageInfo.className = 'text-sm';
         paginationContainer.appendChild(pageInfo);
 
-        // 下一页按钮
         const nextBtn = createButton('<i class="fa-solid fa-chevron-right"></i>', currentPage === totalPages, () => {
             currentPage++;
             renderTags();
@@ -797,29 +800,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function applyFiltersAndRender() {
-        const query = searchInput.value.toLowerCase().trim(); // 获取搜索查询
-        let tempFilteredTags = allTags; // 临时过滤标签数组，从所有标签开始
+        const query = searchInput.value.toLowerCase().trim(); 
+        let tempFilteredTags = allTags; 
 
-        // 根据主分类过滤
         if (activeCategoryFilter !== -1) {
             tempFilteredTags = tempFilteredTags.filter(tag => tag.category === activeCategoryFilter);
         }
 
-        // 根据自定义分类过滤
         if (activeCustomCategoryFilter) {
             tempFilteredTags = tempFilteredTags.filter(tag =>
                 tag.customCategory.toLowerCase().includes(`内置分类-${activeCustomCategoryFilter}`.toLowerCase())
             );
         }
 
-        // 根据 NSFW 过滤
         if (isNsfwFilterActive) {
             tempFilteredTags = tempFilteredTags.filter(tag =>
                 !tag.customCategory.toLowerCase().includes('内置分类-禁')
             );
         }
 
-        // 根据搜索查询过滤（匹配英文名、别名、中文翻译、自定义分类）
         if (query) {
             tempFilteredTags = tempFilteredTags.filter(tag =>
                 tag.name.toLowerCase().includes(query) ||
@@ -829,100 +828,106 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         }
 
-        filteredTags = tempFilteredTags; // 更新过滤后的标签数组
-        currentPage = 1; // 重置当前页码
-        renderTags(); // 渲染标签
-        renderPagination(); // 渲染分页
+        filteredTags = tempFilteredTags; 
+        currentPage = 1; 
+        renderTags(); 
+        renderPagination(); 
     }
     
     // --- 功能模块: 核心交互逻辑与辅助函数 ---
     function toggleTagSelection(tag) {
         const index = selectedTags.findIndex(st => st.name === tag.name);
         if (index > -1) {
-            selectedTags.splice(index, 1); // 如果已选中，则移除
+            selectedTags.splice(index, 1); 
         } else {
-            selectedTags.push(tag); // 如果未选中，则添加
+            selectedTags.push(tag); 
         }
-        renderSelectedTags(); // 重新渲染已选标签
-        // 更新显示在tagDisplayContainer中的标签样式
+        renderSelectedTags(); 
         const displayedTagElement = tagDisplayContainer.querySelector(`[data-tag-name="${tag.name}"]`);
         if (displayedTagElement) {
-            displayedTagElement.classList.toggle('selected', index === -1); // 切换选中样式
+            displayedTagElement.classList.toggle('selected', index === -1); 
         }
-        updateFormattedTextBox(); // 选中/取消选中标签时更新文本框
     }
     
     function generateTagTitle(tag) {
-        const categoryName = CATEGORY_MAP[tag.category] || `未知类别 (${tag.category})`;
+        const lang = displayEnglishOnly ? 'en' : 'zh';
+        const categoryName = uiTexts.categoryMap[tag.category]?.[lang] || `${uiTexts.tagTitleDefaults[lang].unknownCategory} (${tag.category})`;
+        
         return [
             `英文: ${tag.name}`,
-            `中文: ${tag.translation || '无'}`,
-            `别名: ${tag.aliases || '无'}`,
-            `类别: ${categoryName}`,
-            `帖子数量: ${tag.count.toLocaleString()}`,
-            `自定义分类: ${tag.customCategory || '无'}`
+            `中文: ${tag.translation || uiTexts.tagTitleDefaults[lang].noTranslation}`,
+            `别名: ${tag.aliases || uiTexts.tagTitleDefaults[lang].noAliases}`,
+            `${lang === 'zh' ? '类别' : 'Category'}: ${categoryName}`,
+            `${lang === 'zh' ? '帖子数量' : 'Post Count'}: ${tag.count.toLocaleString()}`,
+            `${lang === 'zh' ? '自定义分类' : 'Custom Category'}: ${tag.customCategory || uiTexts.tagTitleDefaults[lang].noCustomCategory}`
         ].join('\n');
     }
     
     function formatTags() {
-        const format = formatSelector.value; // 获取选中的格式
-        const weight = weightInput.value; // 获取权重值
+        const format = formatSelector.value; 
+        const weight = weightInput.value; 
         return selectedTags.map(tag => {
             let tagName = tag.name;
             if (format === 'spaces' || format === 'full') {
-                tagName = tagName.replace(/_/g, ' '); // 下划线转空格
+                tagName = tagName.replace(/_/g, ' '); 
             }
             if (format === 'weighted' || format === 'full') {
-                tagName = `(${tagName}:${weight})`; // 添加权重格式
+                tagName = `(${tagName}:${weight})`; 
             }
             return tagName;
-        }).join(', '); // 用逗号和空格连接标签
+        }).join(', '); 
     }
 
-    // 更新格式化文本框内容
-    function updateFormattedTextBox() {
-        lastFormattedText = formatTags(); // 存储当前的格式化文本
-        formattedTextDisplay.value = lastFormattedText;
-    }
-    
     function copyTagsToClipboard() {
-        // 确保清除之前的计时器，防止消息被覆盖或提前恢复
-        if (copyMessageTimeoutId) {
-            clearTimeout(copyMessageTimeoutId);
-        }
-
-        const formattedString = formatTags(); // 获取当前格式化的标签字符串
+        const formattedString = formatTags(); 
         if (!formattedString) {
-            formattedTextDisplay.value = '没有标签可供复制！'; // 提示用户没有标签
-            formattedTextDisplay.style.color = '#FFA500'; // 橙色提示
-
-            copyMessageTimeoutId = setTimeout(() => {
-                formattedTextDisplay.value = lastFormattedText; // 恢复原文本
-                formattedTextDisplay.style.color = '#00ff00'; // 恢复绿色
-            }, 3000); // 3秒后恢复
-
-            return; // 没有内容直接返回
+            // 没有标签可供复制时，不进行任何操作或提示
+            return; 
         }
         
         navigator.clipboard.writeText(formattedString).then(() => {
-            formattedTextDisplay.value = '复制成功！'; // 复制成功提示
-            formattedTextDisplay.style.color = '#00ff00'; // 绿色成功提示
-
-            copyMessageTimeoutId = setTimeout(() => {
-                formattedTextDisplay.value = lastFormattedText; // 恢复原文本
-                formattedTextDisplay.style.color = '#00ff00'; // 恢复绿色
-            }, 3000); // 3秒后恢复
-
+            // 复制成功，不进行提示
         }).catch(err => {
             console.error('复制失败', err);
-            formattedTextDisplay.value = '复制失败！'; // 复制失败提示
-            formattedTextDisplay.style.color = '#FF0000'; // 红色失败提示
-
-            copyMessageTimeoutId = setTimeout(() => {
-                formattedTextDisplay.value = lastFormattedText; // 恢复原文本
-                formattedTextDisplay.style.color = '#00ff00'; // 恢复绿色
-            }, 3000); // 3秒后恢复
+            // 复制失败，不进行提示
         });
+    }
+
+    // 新增函数：更新所有UI文本
+    function updateUIText(lang) {
+        // 搜索输入框
+        searchInput.placeholder = uiTexts.searchInputPlaceholder[lang];
+        // 拖拽条标题
+        draggableHandle.textContent = uiTexts.draggableHandleText[lang];
+        // 格式化下拉菜单
+        Array.from(formatSelector.options).forEach((option, index) => {
+            option.textContent = uiTexts.formatOptions[index][lang];
+        });
+        // 按钮悬停提示
+        resetSearchBtn.title = uiTexts.buttonTitles.resetSearch[lang];
+        copyBtn.title = uiTexts.buttonTitles.copy[lang];
+        nsfwFilterBtn.title = uiTexts.buttonTitles.nsfwFilter[lang];
+        clearAllBtn.title = uiTexts.buttonTitles.clearAll[lang];
+        floatBall.title = uiTexts.buttonTitles.floatBall[lang];
+        toggleLanguageBtn.title = uiTexts.buttonTitles.toggleLanguage[lang];
+
+        // 分类过滤按钮文本
+        tagFilterBtns.forEach(btn => {
+            const category = btn.dataset.category;
+            btn.textContent = uiTexts.categoryFilterNames[category]?.[lang] || '';
+            // 同时更新 CATEGORY_MAP 以确保 generateTagTitle 使用正确的语言
+            CATEGORY_MAP[category] = uiTexts.categoryMap[category]?.[lang] || '';
+        });
+
+        // 自定义分类过滤按钮文本
+        customCategoryFilterBtns.forEach(btn => {
+            const customCategory = btn.dataset.customCategory;
+            btn.textContent = uiTexts.customCategoryFilterNames[customCategory]?.[lang] || '';
+        });
+
+        // 重新渲染标签以更新其标题和可能改变的显示文本
+        renderTags();
+        renderSelectedTags();
     }
 
     // --- 功能模块: 外观与主题 (自适应) ---
@@ -939,7 +944,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 启动应用 ---
-    init(); // 初始化应用
+    init(); // 调用 init 函数来动态创建所有 DOM 元素
+    applyThemeFromUrl(); 
+    setupEventListeners();
+
+    if (isNsfwFilterActive) {
+        nsfwFilterBtn.classList.add('active');
+    }
+    
+    // 初始化 Sortable.js，用于拖拽已选标签
+    new Sortable(selectedTagsContainer, {
+        animation: 150, 
+        ghostClass: 'ghost-class', 
+        onEnd: (evt) => {
+            const movedTag = selectedTags.splice(evt.oldIndex, 1)[0];
+            selectedTags.splice(evt.newIndex, 0, movedTag);
+            // 这里不再调用 updateFormattedTextBox，因为文本框已移除
+        }
+    });
+
+    // 自动加载默认CSV文件
+    loadCSV(DEFAULT_CSV_URL);
+    
+    // 初始化UI文本
+    updateUIText(displayEnglishOnly ? 'en' : 'zh');
+}
+
+// ==================== Gradio 初始化和启动 ====================
+// 使用 window.addEventListener('load') 作为统一的入口
+window.addEventListener('load', () => {
+    console.log("Window loaded. Attempting to initialize tag assistant.");
+    initializeTagAssistantLogic(); // This calls init() and then loadCSV()
+
+    const gradioContainer = typeof gradioApp === 'function' ? gradioApp() : null;
+    // 直接使用在 initializeTagAssistantLogic 作用域中设置的 appRootInstance
+    const appRootElement = appRootInstance; 
+
+    if (gradioContainer && appRootElement) {
+        console.log("Gradio environment detected. Appending appRoot to gradioApp().");
+        gradioContainer.appendChild(appRootElement); // Attach the dynamically created root to Gradio container
+    } else if (appRootElement) {
+        console.log("Non-Gradio environment. Appending appRoot to document.body.");
+        document.body.appendChild(appRootElement); // Fallback for standard HTML
+    } else {
+        // 只有在 appRootInstance 未被成功赋值时才会出现此错误
+        console.error("Error: appRootElement (appRootInstance) not found after initializeTagAssistantLogic.");
+    }
 });
 </script>
 
