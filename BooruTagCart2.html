@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小河的 Danbooru 标签助手</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">    
+    <script src="https://cdn.tailwindcss.com"></script>    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+    
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        #tag-list > div { transition: all 0.2s ease-in-out; }
+        .sortable-ghost { opacity: 0.4; background: #c0e3f5; }
+        .tag-selected { box-shadow: 0 0 0 3px #3b82f6; transform: scale(0.98); }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-6 max-w-[1400px] min-h-screen flex flex-col">
+        
+        <header class="mb-4 flex justify-between items-center gap-4">
+            <div class="flex-shrink-0">
+                <h1 class="text-2xl md:text-2xl font-bold text-gray-700 flex items-center">
+                    <i class="fa-solid fa-tags text-blue-500 mr-3"></i>小河的 Danbooru 标签助手 2 测试版
+                </h1>
+            </div>
+            <div class="flex-grow max-w-md flex items-center gap-2">
+                <div class="relative w-full"><i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="search" id="search-box" placeholder="搜索标签（英文/中文/别名/分类/备注）..." class="w-full pl-9 pr-3 h-[40px] border border-gray-300 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm"></div>
+                <button id="reset-search-btn" title="重置搜索和过滤" class="h-[40px] px-4 text-sm font-semibold flex-shrink-0 flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-shrink-0">
+                <button id="reload-app-btn" class="hidden h-[40px] px-4 text-sm font-semibold flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-blue-500 text-white hover:bg-blue-600"><i class="fa-solid fa-arrows-rotate"></i> 重新加载</button>
+            </div>
+        </header>
+
+        <div id="load-area-card" class="mb-4 p-4 bg-white rounded-lg shadow-sm border border-gray-200 space-y-3">
+            <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                    <input type="text" id="csv-url" placeholder="输入CSV文件URL或留空使用默认地址" class="w-full px-3 h-[40px] border border-gray-300 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
+                    <button id="reset-url-btn" title="恢复默认URL" class="h-[40px] px-4 text-sm font-semibold flex-shrink-0 flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300"><i class="fa-solid fa-rotate-left"></i></button>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="load-url-btn" class="w-full h-[40px] px-4 text-sm font-semibold flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300"><i class="fa-solid fa-cloud-arrow-down"></i> 加载网络文件</button>
+                    <label for="local-file-btn" class="w-full cursor-pointer h-[40px] px-4 text-sm font-semibold flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300"><i class="fa-solid fa-folder-open"></i> 选择本地文件</label>
+                    <input type="file" id="local-file-btn" accept=".csv" class="hidden">
+                </div>
+            </div>
+            <div id="status-area" class="text-center">
+                <div id="countdown-message" class="text-gray-500 text-sm"></div>
+                <div id="progress-container" class="w-full bg-gray-200 rounded-full h-2.5 my-2 hidden"><div id="progress-bar" class="bg-blue-500 h-2.5 rounded-full transition-all duration-300 ease-linear"></div></div>
+                <div id="status-message" class="text-sm min-h-[1.25rem]"></div>
+            </div>
+        </div>
+        
+        <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- 左栏 -->
+            <div class="md:col-span-1 flex flex-col gap-4">
+                <div class="p-4 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col">
+                     <!-- ▼▼▼ 修改：标题和按钮同行 ▼▼▼ -->
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-base font-semibold text-gray-700">格式化文本</h2>
+                        <div id="copy-btn" class="flex items-center gap-2">
+                            <button id="copy-text-btn" class="h-[30px] px-3 text-xs min-w-[30px] flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-blue-500 text-white hover:bg-blue-600"><i class="fa-solid fa-copy"></i><span class="hidden sm:inline">复制</span></button>
+                        </div>
+                    </div>
+                    <div id="format-controls" class="flex items-center gap-2 pb-3">
+                        <button data-format="comma-space" class="format-btn h-[30px] px-3 text-xs min-w-[30px] flex items-center justify-center gap-2 rounded-md transition-colors duration-200"><i class="fa-solid fa-grip-lines"></i><span class="hidden sm:inline">逗号分隔</span></button>
+                        <button data-format="space" class="format-btn h-[30px] px-3 text-xs min-w-[30px] flex items-center justify-center gap-2 rounded-md transition-colors duration-200"><i class="fa-solid fa-grip-lines-vertical"></i><span class="hidden sm:inline">空格分隔</span></button>
+                        <button data-format="space-underscore" class="format-btn h-[30px] px-3 text-xs min-w-[30px] flex items-center justify-center gap-2 rounded-md transition-colors duration-200"><i class="fa-solid fa-signature"></i><span class="hidden sm:inline">下划线转空格</span></button>
+                        <button data-format="full" class="format-btn h-[30px] px-3 text-xs min-w-[30px] flex items-center justify-center gap-2 rounded-md transition-colors duration-200"><i class="fa-solid fa-asterisk"></i><span class="hidden sm:inline">全格式</span></button>
+                    </div>
+                    <!-- ▼▼▼ 修改：固定高度、隐藏滚动条、禁止缩放 ▼▼▼ -->
+                    <textarea 
+                        id="formatted-output" 
+                        readonly 
+                        class="w-full bg-gray-900 text-green-400 font-mono rounded-md p-3 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 h-[250px] no-scrollbar resize-none" 
+                        placeholder="点击列表中的标签添加到已选区，可编辑排序...">
+                    </textarea>
+
+                </div>
+            </div>
+
+            <!-- 右栏 -->
+            <div class="md:col-span-2 flex flex-col gap-4">
+                <div class="p-4 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col">
+                    <!-- ▼▼▼ 修改：标题和按钮同行 ▼▼▼ -->
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-base font-semibold text-gray-700">已选标签（？个）可拖拽排序</h2>
+                        <div class="flex items-center gap-2">
+                            <button id="clear-selected-btn" class="h-[30px] px-3 text-xs min-w-[30px] flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300"><i class="fa-solid fa-trash-can"></i>清空</button>
+                            <button id="toggle-lang-btn" class="h-[30px] px-3 text-xs min-w-[30px] flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300"><i class="fa-solid fa-language"></i>切换中英文</button>
+                            <button id="save-wildcard-btn" class="h-[30px] px-3 text-xs min-w-[30px] flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300"><i class="fa-solid fa-save"></i>保存为通配符</button>
+                        </div>
+                    </div>
+                    <div id="selected-tags-container" class="flex-grow min-h-[160px] bg-gray-100 rounded-md p-2 flex flex-wrap content-start gap-2 overflow-y-auto"></div>
+                </div>
+                <main class="flex-grow bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col overflow-hidden">
+                    <div id="category-filters" class="flex flex-wrap items-center gap-2 pl-2 pb-3"></div>
+                    <div id="tag-list-container" class="flex-grow overflow-hidden no-scrollbar py-2 p-2 h-[430px]">
+                        <div id="tag-list" class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-4 gap-2"></div>
+                    </div>
+                    <div id="pagination-controls" class="mt-auto pt-3 border-t border-gray-200 flex justify-center items-center gap-2 text-sm"></div>
+                </main>
+            </div>
+        </div>
+
+        <footer class="text-center mt-auto pt-4 text-xs text-gray-400">
+             <p>共 <span id="total-tags" class="font-semibold">0</span> 个标签。</p>
+        </footer>
+    </div>
+
+    <script>
+        const elements = {
+            csvUrlInput: document.getElementById('csv-url'), resetUrlBtn: document.getElementById('reset-url-btn'),
+            loadUrlBtn: document.getElementById('load-url-btn'), localFileBtn: document.getElementById('local-file-btn'),
+            searchBox: document.getElementById('search-box'), resetSearchBtn: document.getElementById('reset-search-btn'),
+            categoryFilters: document.getElementById('category-filters'), countdownMessage: document.getElementById('countdown-message'),
+            progressContainer: document.getElementById('progress-container'), progressBar: document.getElementById('progress-bar'),
+            statusMessage: document.getElementById('status-message'), tagList: document.getElementById('tag-list'),
+            tagListContainer: document.getElementById('tag-list-container'), paginationControls: document.getElementById('pagination-controls'),
+            totalTags: document.getElementById('total-tags'), loadAreaCard: document.getElementById('load-area-card'),
+            reloadAppBtn: document.getElementById('reload-app-btn'), selectedTagsContainer: document.getElementById('selected-tags-container'),
+            toggleLangBtn: document.getElementById('toggle-lang-btn'), clearSelectedBtn: document.getElementById('clear-selected-btn'),
+            saveWildcardBtn: document.getElementById('save-wildcard-btn'), formattedOutput: document.getElementById('formatted-output'),
+            formatControls: document.getElementById('format-controls'), copyTextBtn: document.getElementById('copy-text-btn'),
+        };
+
+        const DEFAULT_URL = 'https://raw.githubusercontent.com/metercai/SimpleSDXL/refs/heads/SimpleSDXL_dev/tags/danbooru_all.csv';
+        let countdownInterval, mainSortable, selectedSortable;
+        let allTagsData = [], filteredTagsData = [], selectedTags = [];
+        const TAGS_PER_PAGE = 28; //标签列表每页显示标签数量
+        let currentPage = 1, currentCategoryFilter = 'all', selectedTagsLanguage = 'cn', currentFormat = 'space-underscore';
+        const categoryMap = { '0':{n:'通用',c:'blue',i:'fa-tag'},'1':{n:'画师',c:'red',i:'fa-palette'},'3':{n:'作品',c:'purple',i:'fa-copyright'},'4':{n:'角色',c:'green',i:'fa-user'},'5':{n:'元数据',c:'orange',i:'fa-info-circle'},'6':{n:'Kontext',c:'pink',i:'fa-cogs'}};
+        const debounce = (func, delay) => { let timeout; return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), delay); }; };
+
+        const btnBaseClasses = ['bg-gray-200', 'text-gray-700', 'hover:bg-gray-300'];
+        const btnActiveClasses = ['bg-blue-500', 'text-white', 'hover:bg-blue-600'];
+
+        function resetUI() {
+            if (mainSortable) { mainSortable.destroy(); mainSortable = null; }
+            if (selectedSortable) { selectedSortable.destroy(); selectedSortable = null; }
+            allTagsData = [], filteredTagsData = [], selectedTags = [], currentPage = 1, currentCategoryFilter = 'all', currentFormat = 'space-underscore';
+            elements.tagList.innerHTML = '', elements.paginationControls.innerHTML = '', elements.statusMessage.textContent = '';
+            elements.selectedTagsContainer.innerHTML = '', elements.formattedOutput.value = '';
+            elements.progressContainer.classList.add('hidden'), elements.progressBar.style.width = '0%';
+            elements.totalTags.textContent = '0', elements.searchBox.value = '';
+            elements.loadAreaCard.classList.remove('hidden');
+            elements.reloadAppBtn.classList.add('hidden');
+            updateCategoryButtonStyles();
+            updateFormatButtonStyles();
+        }
+
+        async function loadFile(source) { resetUI(); stopCountdown(); if (typeof source === 'string') await loadNetworkFile(source); else parseCsvData(source, '本地文件'); }
+        async function loadNetworkFile(url) { elements.progressContainer.classList.remove('hidden'); elements.statusMessage.textContent = '正在连接服务器...'; try { const response = await fetch(url); if (!response.ok) throw new Error(`网络错误: ${response.status} ${response.statusText}`); if (!response.body) throw new Error('响应中没有数据体'); const contentLength = response.headers.get('content-length'), totalSize = parseInt(contentLength, 10); let receivedLength = 0, chunks = []; const reader = response.body.getReader(); elements.statusMessage.textContent = '正在下载文件... 0%'; while (true) { const { done, value } = await reader.read(); if (done) break; chunks.push(value), receivedLength += value.length; if (totalSize) { const progress = Math.round((receivedLength / totalSize) * 100); elements.progressBar.style.width = `${progress}%`, elements.statusMessage.textContent = `正在下载文件... ${progress}%`; } } parseCsvData(new Blob(chunks), '网络文件'); } catch (error) { elements.progressContainer.classList.add('hidden'), elements.statusMessage.textContent = `下载失败: ${error.message}`, elements.statusMessage.classList.add('text-red-500', 'font-bold'); } }
+        function parseCsvData(dataToParse, sourceName) { const startTime = performance.now(); elements.statusMessage.textContent = '开始解析数据...', elements.progressBar.style.width = '0%', elements.progressContainer.classList.remove('hidden'); Papa.parse(dataToParse, { header: false, skipEmptyLines: true, chunk: (results, parser) => { allTagsData = allTagsData.concat(results.data); const rowCount = allTagsData.length, progress = Math.min((rowCount / 160000) * 100, 100); elements.progressBar.style.width = `${progress}%`, elements.statusMessage.textContent = `已解析 ${rowCount.toLocaleString()} 行...`; }, complete: () => { allTagsData.sort((a, b) => (parseInt(b[2], 10) || 0) - (parseInt(a[2], 10) || 0)); const duration = ((performance.now() - startTime) / 1000).toFixed(2); elements.progressBar.style.width = '100%', elements.totalTags.textContent = allTagsData.length.toLocaleString(); applyAllFilters(); const finalMessage = `${sourceName}加载完成！共 ${allTagsData.length.toLocaleString()} 个标签，耗时 ${duration} 秒。`; elements.statusMessage.textContent = finalMessage; setTimeout(() => { elements.loadAreaCard.classList.add('hidden'); elements.reloadAppBtn.classList.remove('hidden'); }, 2000); initSortable(); }, error: (error) => { elements.progressContainer.classList.add('hidden'), elements.statusMessage.textContent = `解析失败: ${error.message}`, elements.statusMessage.classList.add('text-red-500', 'font-bold'); } }); }
+        function applyAllFilters() { const query = elements.searchBox.value.toLowerCase().trim(); let tempTags = allTagsData; if (currentCategoryFilter !== 'all') { tempTags = tempTags.filter(row => row[1] === currentCategoryFilter); } if (query) { tempTags = tempTags.filter(row => `${row[0]||''} ${row[4]||''} ${row[3]||''} ${row[5]||''} ${row[6]||''} ${row[7]||''}`.toLowerCase().includes(query)); } filteredTagsData = tempTags; currentPage = 1; updatePaginationAndRender(); } // 搜索匹配 0， 4 ，3 列，可修改
+        function updatePaginationAndRender() { renderPage(); updatePaginationControls(); }
+        function renderPage() { elements.tagList.innerHTML = ''; const startIndex = (currentPage - 1) * TAGS_PER_PAGE, endIndex = startIndex + TAGS_PER_PAGE; const pageData = filteredTagsData.slice(startIndex, endIndex); const fragment = document.createDocumentFragment(); pageData.forEach(row => fragment.appendChild(createTagElement(row))); elements.tagList.appendChild(fragment); }
+        function updatePaginationControls() { elements.paginationControls.innerHTML = ''; const totalPages = Math.ceil(filteredTagsData.length / TAGS_PER_PAGE); if (totalPages <= 1) return; const createBtn = (html, page, disabled) => { const btn = document.createElement('button'); btn.innerHTML = html, btn.dataset.page = page, btn.disabled = disabled; btn.className = 'pagination-btn px-2 py-1 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition-colors text-xs'; return btn; }; const pageInfo = Object.assign(document.createElement('span'), { textContent: `第 ${currentPage} / ${totalPages} 页`, className: 'px-2 text-gray-600 text-xs' }); elements.paginationControls.append( createBtn('<i class="fa-solid fa-angles-left"></i>', 1, currentPage === 1), createBtn('<i class="fa-solid fa-angle-left"></i>', currentPage - 1, currentPage === 1), pageInfo, createBtn('<i class="fa-solid fa-angle-right"></i>', currentPage + 1, currentPage === totalPages), createBtn('<i class="fa-solid fa-angles-right"></i>', totalPages, currentPage === totalPages) ); }
+        function formatPopularity(numStr) { const num = parseInt(numStr, 10); if (isNaN(num)) return '0'; if (num >= 1000000) return `${(num / 1000000).toFixed(1).replace(/\.0$/, '')}M`; if (num >= 1000) return `${(num / 1000).toFixed(1).replace(/\.0$/, '')}K`; return num.toString(); }
+
+        function createTagElement(row) {
+            const [enTag, catId, pop, alias, cnTag, l1, l2, notes] = row;
+            const isSelected = selectedTags.some(selected => selected[0] === enTag);
+            const cat = categoryMap[catId] || categoryMap['0'];
+            const div = document.createElement('div');
+            const details = [ `英文: ${enTag || 'N/A'}`, `中文: ${cnTag || '无'}`, `别名: ${alias || '无'}`, `热度: ${pop || '0'}`, `类别: ${cat.n}`, `一级分类: ${l1 || '无'}`, `二级分类: ${l2 || '无'}`, `备注: ${notes || '无'}` ].join('\n');
+            div.title = details;
+            div.className = `p-2 rounded-md flex items-center justify-between transform hover:-translate-y-1 hover:scale-103 hover:shadow-xl cursor-pointer bg-${cat.c}-100 text-${cat.c}-800 hover:ring-2 hover:ring-offset-2 hover:ring-${cat.c}-400 text-sm`;
+            if (isSelected) div.classList.add('tag-selected');
+            div.dataset.enTag = enTag;
+            div.onclick = () => toggleTagSelection(row, div);
+            const primaryText = cnTag || enTag;
+            let secondaryTextHtml = cnTag ? `<p class="text-xs text-${cat.c}-600 truncate">${enTag}</p>` : '';
+            div.innerHTML = `<div class="flex items-center overflow-hidden mr-2"><i class="fa-solid ${cat.i} w-4 text-center mr-2"></i><div class="overflow-hidden"><p class="font-semibold truncate">${primaryText}</p>${secondaryTextHtml}</div></div><div class="text-xs font-mono bg-white/60 px-1.5 py-0.5 rounded">${formatPopularity(pop)}</div>`;
+            return div;
+        }
+
+        function toggleTagSelection(tagRow, element) { const enTag = tagRow[0]; const index = selectedTags.findIndex(t => t[0] === enTag); if (index > -1) { selectedTags.splice(index, 1); element?.classList.remove('tag-selected'); } else { selectedTags.push(tagRow); element?.classList.add('tag-selected'); } renderSelectedTags(); updateFormattedOutput(); }
+
+        function renderSelectedTags() {
+            elements.selectedTagsContainer.innerHTML = '';
+            selectedTags.forEach(row => {
+                const [enTag, catId, pop, alias, cnTag, l1, l2, notes] = row;
+                const displayText = selectedTagsLanguage === 'cn' ? (cnTag || enTag) : enTag;
+                const cat = categoryMap[catId] || categoryMap['0'];
+                const tagEl = document.createElement('div');
+                // ▼▼▼ 修改：添加完整的 title 属性 ▼▼▼
+                const details = [ `英文: ${enTag || 'N/A'}`, `中文: ${cnTag || '无'}`, `别名: ${alias || '无'}`, `热度: ${pop || '0'}`, `类别: ${cat.n}`, `一级分类: ${l1 || '无'}`, `二级分类: ${l2 || '无'}`, `备注: ${notes || '无'}` ].join('\n');
+                tagEl.title = details;
+                tagEl.dataset.enTag = enTag;
+                tagEl.className = `h-[35px] px-3 flex items-center justify-between gap-2 rounded-md shadow-sm border border-${cat.c}-200 bg-${cat.c}-100 text-${cat.c}-800 min-w-[60px] max-w-[200px] text-sm font-bold`;
+                tagEl.innerHTML = `<span class="truncate">${displayText}</span><button class="remove-selected-tag-btn text-${cat.c}-500 hover:text-${cat.c}-700 font-bold text-xl leading-none">×</button>`;
+                tagEl.querySelector('.remove-selected-tag-btn').onclick = e => { e.stopPropagation(); const mainListEl = findTagElementInMainList(enTag); toggleTagSelection(row, mainListEl); };
+                elements.selectedTagsContainer.appendChild(tagEl);
+            });
+        }
+        
+        function findTagElementInMainList(enTag) { return elements.tagList.querySelector(`[data-en-tag="${enTag}"]`); }
+        function updateFormattedOutput() { let output = ''; const tags = selectedTags.map(row => row[0]); switch(currentFormat) { case 'comma-space': output = tags.join(', '); break; case 'space': output = tags.join(' '); break; case 'space-underscore': output = tags.map(tag => tag.replace(/_/g, ' ')).join(', '); break; case 'full': output = tags.map(tag => `(${tag.replace(/_/g, ' ')}:1.1)`).join(', '); break; } elements.formattedOutput.value = output; }
+        function createCategoryFilters() { elements.categoryFilters.innerHTML = ''; const allBtn = document.createElement('button'); allBtn.innerHTML = `<i class="fa-solid fa-globe w-4 text-center"></i><span class="hidden sm:inline">全部</span>`; allBtn.dataset.id = 'all'; elements.categoryFilters.appendChild(allBtn); Object.entries(categoryMap).forEach(([id, {n: name, i: icon}]) => { const btn = document.createElement('button'); btn.innerHTML = `<i class="fa-solid ${icon} w-4 text-center"></i><span class="hidden sm:inline">${name}</span>`; btn.dataset.id = id; elements.categoryFilters.appendChild(btn); }); updateCategoryButtonStyles(); }
+        
+        function updateCategoryButtonStyles() {
+            elements.categoryFilters.querySelectorAll('button').forEach(btn => {
+                const baseClasses = ['h-[30px]', 'px-3', 'text-xs', 'min-w-[30px]', 'flex', 'items-center', 'justify-center', 'gap-2', 'rounded-md', 'transition-colors', 'duration-200'];
+                btn.classList.remove(...btnActiveClasses, ...btnBaseClasses);
+                if (btn.dataset.id === currentCategoryFilter) { btn.className = [...baseClasses, ...btnActiveClasses].join(' '); } 
+                else { btn.className = [...baseClasses, ...btnBaseClasses].join(' '); }
+            });
+        }
+
+        function updateFormatButtonStyles() {
+            elements.formatControls.querySelectorAll('.format-btn').forEach(btn => {
+                btn.classList.remove(...btnActiveClasses, ...btnBaseClasses);
+                btn.classList.add(...btnBaseClasses);
+                if (btn.dataset.format === currentFormat) { btn.classList.remove(...btnBaseClasses); btn.classList.add(...btnActiveClasses); }
+            });
+        }
+        
+        function initSortable() { if (typeof Sortable === 'undefined') return; mainSortable = new Sortable(elements.tagList, { animation: 150, ghostClass: 'sortable-ghost', group: 'shared' }); selectedSortable = new Sortable(elements.selectedTagsContainer, { animation: 150, group: 'shared', onEnd: evt => { const newOrder = Array.from(evt.to.children).map(el => el.dataset.enTag); selectedTags.sort((a, b) => newOrder.indexOf(a[0]) - newOrder.indexOf(b[0])); updateFormattedOutput(); } }); }
+        function startCountdown(customSeconds) { 
+            // 设置默认秒数：若不传参数则用5秒，传了则用传入的秒数（例如重置按钮传10）
+            const defaultSeconds = 3;
+            const countdownSeconds = customSeconds ?? defaultSeconds; // 优先使用传入的秒数
+            let seconds = countdownSeconds;
+            elements.countdownMessage.textContent = `将在 ${seconds} 秒后自动加载默认URL...`; 
+            elements.countdownMessage.classList.remove('hidden'); 
+            countdownInterval = setInterval(() => { 
+                seconds--; 
+                if (seconds > 0) elements.countdownMessage.textContent = `将在 ${seconds} 秒后自动加载默认URL...`; 
+                else { 
+                    stopCountdown(); 
+                    elements.csvUrlInput.value = DEFAULT_URL; 
+                    loadFile(DEFAULT_URL); 
+                } 
+            }, 1000); 
+        }
+        function stopCountdown() { clearInterval(countdownInterval); elements.countdownMessage.classList.add('hidden'); }
+
+        document.addEventListener('DOMContentLoaded', () => { createCategoryFilters(); startCountdown(); initSortable(); updateFormatButtonStyles(); });
+        elements.csvUrlInput.addEventListener('input', stopCountdown);
+        elements.localFileBtn.addEventListener('click', stopCountdown);
+        elements.loadUrlBtn.addEventListener('click', () => { const url = elements.csvUrlInput.value.trim() || DEFAULT_URL; loadFile(url); });
+        elements.localFileBtn.addEventListener('change', (event) => { const file = event.target.files[0]; if (file) loadFile(file); });
+        elements.resetUrlBtn.addEventListener('click', () => { elements.csvUrlInput.value = DEFAULT_URL; });
+        const debouncedFilter = debounce(applyAllFilters, 300);
+        elements.searchBox.addEventListener('input', debouncedFilter);
+        elements.resetSearchBtn.addEventListener('click', () => { elements.searchBox.value = ''; currentCategoryFilter = 'all'; updateCategoryButtonStyles(); applyAllFilters(); });
+        elements.categoryFilters.addEventListener('click', e => { const btn = e.target.closest('button'); if (btn && btn.dataset.id) { currentCategoryFilter = btn.dataset.id; updateCategoryButtonStyles(); applyAllFilters(); } });
+        elements.paginationControls.addEventListener('click', e => { const btn = e.target.closest('.pagination-btn'); if (btn && !btn.disabled) { currentPage = Number(btn.dataset.page); updatePaginationAndRender(); } });
+        elements.reloadAppBtn.addEventListener('click', () => { resetUI(); startCountdown(10); });
+        elements.toggleLangBtn.addEventListener('click', () => { selectedTagsLanguage = selectedTagsLanguage === 'cn' ? 'en' : 'cn'; renderSelectedTags(); });
+        elements.clearSelectedBtn.addEventListener('click', () => { const previouslySelected = [...selectedTags]; selectedTags = []; renderSelectedTags(); updateFormattedOutput(); previouslySelected.forEach(tagRow => { const mainListEl = findTagElementInMainList(tagRow[0]); mainListEl?.classList.remove('tag-selected'); }); });
+        elements.saveWildcardBtn.addEventListener('click', () => { const content = selectedTags.map(row => row[0]).join('\n'); const blob = new Blob([content], { type: 'text/plain;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'wildcard.txt'; link.click(); URL.revokeObjectURL(link.href); });
+        elements.formatControls.addEventListener('click', e => { const btn = e.target.closest('.format-btn'); if (btn) { currentFormat = btn.dataset.format; updateFormatButtonStyles(); updateFormattedOutput(); } });
+        elements.copyTextBtn.addEventListener('click', () => { if (!elements.formattedOutput.value) return; elements.formattedOutput.select(); navigator.clipboard.writeText(elements.formattedOutput.value).then(() => { const originalText = '复制'; elements.copyTextBtn.innerHTML = `<i class="fa-solid fa-check"></i><span class="hidden sm:inline">已复制!</span>`; elements.copyTextBtn.classList.add('bg-green-500', 'hover:bg-green-600'); elements.copyTextBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600'); setTimeout(() => { elements.copyTextBtn.innerHTML = `<i class="fa-solid fa-copy"></i><span class="hidden sm:inline">${originalText}</span>`; elements.copyTextBtn.classList.add('bg-blue-500', 'hover:bg-blue-600'); elements.copyTextBtn.classList.remove('bg-green-500', 'hover:bg-green-600'); }, 2000); }); });
+    </script>
+</body>
+</html>
