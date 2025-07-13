@@ -4,8 +4,9 @@
 # 小河的 Danbooru 标签助手  
 
 <div align="center">
-  <h3><a href="https://xhoxye.github.io/BooruTagCart/"> >> Demo 网站 <<</a></h3>
-  <h3><a href="https://xhoxye.github.io/BooruTagCart/SimpAI_TagCart_index.html"> >> SimpAI 内嵌标签助手 测试 Demo 网站 <<</a></h3>
+  <h3><a href="https://xhoxye.github.io/BooruTagCart/BooruTagCart2.html"> >> 标签助手 v2.0.0 Demo 演示网站 <<</a></h3>
+  <h3><a href="https://xhoxye.github.io/BooruTagCart/"> >> 标签助手 v1.0.5 Demo 演示网站 <<</a></h3>
+  <h3><a href="https://xhoxye.github.io/BooruTagCart/SimpAI_TagCart_index.html"> >> 标签助手 v1.1 SimpAI 内嵌版 测试 Demo 演示网站 <<</a></h3>
 </div>
 
 # BooruTagCart 🛒
