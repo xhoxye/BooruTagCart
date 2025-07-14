@@ -199,9 +199,12 @@
                 </button>
             </div>
             <div class="flex-shrink-0">
-                <button id="reload-app-btn" class="h-[36px] px-3 text-sm flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-blue-500 text-white hover:bg-blue-600 hidden">
-                    <i class="fa-solid fa-arrows-rotate"></i> 重新加载
-                </button>
+                <!-- 添加固定宽度的占位容器 -->
+                <div class="w-[120px]">
+                    <button id="reload-app-btn" class="h-[36px] px-3 text-sm flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-blue-500 text-white hover:bg-blue-600 hidden">
+                        <i class="fa-solid fa-arrows-rotate"></i> 重新加载
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -271,18 +274,10 @@
                     <!-- 新增：提示词解析区域 -->
                     <div class="mt-2 pt-2 border-t border-gray-200">
                         <h3 class="text-xs font-semibold text-gray-600 mb-1">粘贴提示词解析</h3>
-                        <textarea id="prompt-input" class="w-full bg-gray-100 border border-gray-300 rounded-md p-2 text-sm h-20 resize-y" placeholder="在此处粘贴提示词，例如：1girl, solo, long hair, masterpiece..."></textarea>
+                        <textarea id="prompt-input" class="w-full bg-gray-100 border border-gray-300 rounded-md p-2 text-sm min-h-[60px] resize-y" placeholder="在此处粘贴提示词，例如：1girl, solo, long hair, masterpiece..."></textarea>
                         <button id="parse-prompt-btn" class="w-full mt-1 h-8 px-3 text-sm flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-green-500 text-white hover:bg-green-600">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> 解析为标签
                         </button>
-                    </div>
-                </div>
-                
-                <!-- 标签详情区 -->
-                <div id="tag-details-card" class="p-3 rounded-lg bg-white shadow-sm border border-gray-200 hidden">
-                    <h2 class="text-sm font-semibold text-gray-700 mb-2">标签详情</h2>
-                    <div id="tag-details-content" class="text-xs space-y-1">
-                        <p>请从下方列表中选择一个标签以查看其详细信息。</p>
                     </div>
                 </div>
 
@@ -320,6 +315,17 @@
                         </button>
                     </div>
                 </div>
+                
+                <!-- 标签详情区 - 添加固定高度的占位容器 -->
+                <div class="min-h-[215px]">
+                    <div id="tag-details-card" class="p-3 rounded-lg bg-white shadow-sm border border-gray-200 hidden">
+                        <h2 class="text-sm font-semibold text-gray-700 mb-2">标签详情</h2>
+                        <div id="tag-details-content" class="text-xs space-y-1">
+                            <p>请从下方列表中选择一个标签以查看其详细信息。</p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- 右栏 -->
@@ -339,7 +345,7 @@
                             </button>
                         </div>
                     </div>
-                    <div id="selected-tags-container" class="flex-grow min-h-32 bg-gray-100 rounded-md p-2 flex flex-wrap content-start gap-1 overflow-y-auto">
+                    <div id="selected-tags-container" class="flex-grow min-h-[135px] bg-gray-100 rounded-md p-2 flex flex-wrap content-start gap-1 overflow-y-auto">
                         <div class="flex flex-col items-center justify-center w-full h-full text-gray-400">
                             <i class="fa-solid fa-tags text-3xl mb-2"></i>
                             <p class="text-sm">尚未选择任何标签</p>
@@ -658,13 +664,14 @@
                             // 隐藏加载区
                             setTimeout(() => {
                                 elements.loadAreaCard.classList.add('hidden');
+                                elements.reloadAppBtn.classList.remove('hidden'); // 加载完成后显示重新加载按钮
                             }, 2000);
                             
                             // 初始化拖拽排序
                             initSortable();
                             
                             // 显示重新加载按钮
-                            elements.reloadAppBtn.classList.remove('hidden');
+                            // elements.reloadAppBtn.classList.remove('hidden');
                         },
                         error: (error) => {
                             elements.statusMessage.textContent = `解析失败: ${error.message}`;
