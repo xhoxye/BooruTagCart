@@ -538,7 +538,7 @@
                 },
                 
                 updateStats: () => {
-                    if (state.allTags.length === 0) return;
+                    //if (state.allTags.length === 0) return; //强制清空数据统计
 
                     // 重置计数
                     state.categoryCounts = { '0': 0, '1': 0, '3': 0, '4': 0, '5': 0, '6': 0 };
@@ -909,7 +909,7 @@
                         el.classList.remove('tag-selected');
                     });
                     tagRenderer.renderSelectedTags();
-                    tagDetails.hide();
+                    tagDetails.update();
                 },
                 
                 applyFilters: () => {
@@ -938,6 +938,10 @@
             // 标签详情模块
             const tagDetails = {
                 update: (tag) => {  // 重命名 show 为 update
+                    if (!tag) {
+                        elements.tagDetailsContent.innerHTML = '<p>请从下方列表中选择一个标签以查看其详细信息。</p>';
+                        return;
+                    }
                     const [enTag, catId, pop, alias, cnTag, l1, l2, notes] = tag;
                     const category = CATEGORY_MAP[catId] || CATEGORY_MAP['0'];
 
@@ -1228,7 +1232,6 @@
                             },
                             tooltipTimeout: null
                         };
-                        updateCategoryButtonStyles();
                         
                         elements.selectedCount.textContent = '0';
                         elements.formattedOutput.value = '';
@@ -1237,9 +1240,10 @@
                         elements.paginationControls.innerHTML = '';
                         elements.selectedTagsContainer.innerHTML = '';
                         
-                        // 更新统计区域并隐藏详情卡
+                        // 更新统计区域、更新统计区域
+                        updateCategoryButtonStyles();
                         utils.updateStats();
-                        tagDetails.hide();
+                        tagDetails.update();
                         
                         // 显示加载区
                         elements.loadAreaCard.classList.remove('hidden');
