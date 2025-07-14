@@ -23,12 +23,33 @@
             scrollbar-width: none;
         }
         .tag-selected {
-            box-shadow: 0 0 0 3px #3b82f6;
-            transform: scale(0.98);
+            filter: grayscale(80%);
+            transform: scale(0.95);
+            box-shadow: none;
+        }
+        .tag-selected::after {
+            content: '✔';
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 9999px;
+            width: 18px;
+            height: 18px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            line-height: 1;
+            box-shadow: 0 0 0 2px white;
         }
         .sortable-ghost {
             opacity: 0.4;
             background: #c0e3f5;
+            outline: 2px dashed #3b82f6;
+            outline-offset: -4px;
         }
         .fade-in {
             animation: fadeIn 0.3s ease-in;
@@ -46,6 +67,7 @@
         .tag-item {
             transition: all 0.2s ease;
             cursor: pointer;
+            position: relative; /* For positioning the badge */
         }
         .tag-item:hover {
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
@@ -55,12 +77,6 @@
         }
         .format-btn {
             transition: all 0.2s ease;
-            background: #f3f4f6;
-            color: #4b5563;
-        }
-        .format-btn.active {
-            background: #3b82f6;
-            color: white;
         }
         .btn-primary {
             background: #3b82f6;
@@ -142,6 +158,21 @@
         }
         .selected-tag {
             position: relative;
+            transition: all 0.2s ease-in-out;
+        }
+        .selected-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .unmatched-tag {
+            background-color: #f3f4f6; /* gray-100 */
+            border: 1px dotted #9ca3af; /* gray-400 */
+            color: #4b5563; /* gray-600 */
+            transition: all 0.2s ease-in-out;
+        }
+        .unmatched-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
@@ -161,7 +192,7 @@
             <div class="flex-grow max-w-md flex items-center gap-2">
                 <div class="relative w-full">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="search" id="search-box" placeholder="搜索标签..." class="w-full pl-9 pr-3 h-[36px] border border-gray-300 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
+                    <input type="search" id="search-box" placeholder="搜索标签 (英文/中文/别名/分类/备注)..." class="w-full pl-9 pr-3 h-[36px] border border-gray-300 rounded-md focus:outline-none focus:border-transparent focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
                 </div>
                 <button id="reset-search-btn" title="重置搜索" class="h-[36px] w-10 flex items-center justify-center rounded-md transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300">
                     <i class="fa-solid fa-xmark"></i>
@@ -178,7 +209,7 @@
         <div id="load-area-card" class="mb-3 p-3 bg-white rounded-lg shadow-sm border border-gray-200 space-y-2">
             <div class="space-y-2">
                 <div class="flex items-center gap-2">
-                    <input type="text" id="csv-url" value="https://raw.githubusercontent.com/xhoxye/BooruTagCart/refs/heads/main/assets/danbooru_all_2.csv" class="w-full px-3 h-[36px] border border-gray-300 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
+                    <input type="text" id="csv-url" value="https://raw.githubusercontent.com/xhoxye/BooruTagCart/refs/heads/main/assets/danbooru_all_2.csv" class="w-full px-3 h-[36px] border border-gray-300 rounded-md focus:outline-none focus:border-transparent focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
                     <button id="reset-url-btn" title="恢复默认URL" class="h-[36px] w-10 flex items-center justify-center rounded-md transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300">
                         <i class="fa-solid fa-rotate-left"></i>
                     </button>
@@ -217,16 +248,16 @@
                         </div>
                     </div>
                     <div id="format-controls" class="flex flex-wrap items-center gap-1 pb-2">
-                        <button data-format="comma-space" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md">
+                        <button data-format="comma-space" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fa-solid fa-grip-lines"></i><span class="hidden sm:inline">逗号分隔</span>
                         </button>
-                        <button data-format="space" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md">
+                        <button data-format="space" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fa-solid fa-grip-lines-vertical"></i><span class="hidden sm:inline">空格分隔</span>
                         </button>
-                        <button data-format="space-underscore" class="format-btn active h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md">
+                        <button data-format="space-underscore" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fa-solid fa-signature"></i><span class="hidden sm:inline">下划线转空格</span>
                         </button>
-                        <button data-format="full" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md">
+                        <button data-format="full" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fa-solid fa-asterisk"></i><span class="hidden sm:inline">全格式</span>
                         </button>
                     </div>
@@ -236,40 +267,57 @@
                         class="w-full bg-gray-900 text-green-400 font-mono rounded-md p-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 h-32 no-scrollbar resize-none" 
                         placeholder="已选标签组合编辑排序后，格式化文本将显示在这里...">
                     </textarea>
+
+                    <!-- 新增：提示词解析区域 -->
+                    <div class="mt-2 pt-2 border-t border-gray-200">
+                        <h3 class="text-xs font-semibold text-gray-600 mb-1">粘贴提示词解析</h3>
+                        <textarea id="prompt-input" class="w-full bg-gray-100 border border-gray-300 rounded-md p-2 text-sm h-20 resize-y" placeholder="在此处粘贴提示词，例如：1girl, solo, long hair, masterpiece..."></textarea>
+                        <button id="parse-prompt-btn" class="w-full mt-1 h-8 px-3 text-sm flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-green-500 text-white hover:bg-green-600">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> 解析为标签
+                        </button>
+                    </div>
                 </div>
                 
+                <!-- 标签详情区 -->
+                <div id="tag-details-card" class="p-3 rounded-lg bg-white shadow-sm border border-gray-200 hidden">
+                    <h2 class="text-sm font-semibold text-gray-700 mb-2">标签详情</h2>
+                    <div id="tag-details-content" class="text-xs space-y-1">
+                        <p>请从下方列表中选择一个标签以查看其详细信息。</p>
+                    </div>
+                </div>
+
                 <!-- 标签数据统计区 -->
                 <div class="p-3 rounded-lg stats-card shadow-sm">
                     <h2 class="text-sm font-semibold text-gray-700 mb-2">标签统计</h2>
-                    <div class="space-y-1">
-                        <div class="stat-item">
-                            <span>总标签数</span>
-                            <span id="total-tags-stat" class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span><i class="fa-solid fa-tag text-blue-500 mr-1"></i> 通用标签</span>
-                            <span id="cat-0-stat" class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span><i class="fa-solid fa-palette text-red-500 mr-1"></i> 画师标签</span>
-                            <span id="cat-1-stat" class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span><i class="fa-solid fa-copyright text-purple-500 mr-1"></i> 作品标签</span>
-                            <span id="cat-3-stat" class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span><i class="fa-solid fa-user text-green-500 mr-1"></i> 角色标签</span>
-                            <span id="cat-4-stat" class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span><i class="fa-solid fa-info-circle text-orange-500 mr-1"></i> 元数据标签</span>
-                            <span id="cat-5-stat" class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span><i class="fa-solid fa-cogs text-pink-500 mr-1"></i> Kontext标签</span>
-                            <span id="cat-6-stat" class="stat-value">0</span>
-                        </div>
+                    <div id="stats-buttons-container" class="grid grid-cols-4 gap-2 text-sm">
+                        <button data-category="all" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
+                            <span class="font-bold text-blue-600 text-base">0</span>
+                            <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-globe text-gray-500"></i> 全部</span>
+                        </button>
+                        <button data-category="0" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
+                            <span class="font-bold text-blue-600 text-base">0</span>
+                            <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-tag text-blue-500"></i> 通用</span>
+                        </button>
+                        <button data-category="1" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
+                            <span class="font-bold text-blue-600 text-base">0</span>
+                            <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-palette text-red-500"></i> 画师</span>
+                        </button>
+                        <button data-category="3" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
+                            <span class="font-bold text-blue-600 text-base">0</span>
+                            <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-copyright text-purple-500"></i> 作品</span>
+                        </button>
+                        <button data-category="4" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
+                            <span class="font-bold text-blue-600 text-base">0</span>
+                            <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-user text-green-500"></i> 角色</span>
+                        </button>
+                        <button data-category="5" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
+                            <span class="font-bold text-blue-600 text-base">0</span>
+                            <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-info-circle text-orange-500"></i> 元数据</span>
+                        </button>
+                        <button data-category="6" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
+                            <span class="font-bold text-blue-600 text-base">0</span>
+                            <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-cogs text-pink-500"></i> Kontext</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -303,25 +351,25 @@
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 flex flex-col overflow-hidden">
                     <!-- 紧凑的分类过滤器 -->
                     <div id="category-filters" class="flex flex-wrap items-center gap-1 pb-2">
-                        <button id="all-categories" class="category-btn h-7 px-2 text-xs min-w-[50px] flex items-center justify-center gap-1 rounded-md transition-colors duration-200 bg-blue-500 text-white hover:bg-blue-600">
+                        <button id="all-categories" class="category-btn h-7 px-2 text-xs min-w-[50px] flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fa-solid fa-globe w-3 text-center"></i><span>全部</span>
                         </button>
-                        <button data-category="0" class="category-btn h-7 px-2 text-xs min-w-[50px] flex items-center justify-center gap-1 rounded-md transition-colors duration-200">
+                        <button data-category="0" class="category-btn h-7 px-2 text-xs min-w-[50px] flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fa-solid fa-tag w-3 text-center"></i><span>通用</span>
                         </button>
-                        <button data-category="1" class="category-btn h-7 px-2 text-xs min-w-[50px] flex items-center justify-center gap-1 rounded-md transition-colors duration-200">
+                        <button data-category="1" class="category-btn h-7 px-2 text-xs min-w-[50px] flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fa-solid fa-palette w-3 text-center"></i><span>画师</span>
                         </button>
-                        <button data-category="3" class="category-btn h-7 px-2 text-xs min-w-[50px] flex items-center justify-center gap-1 rounded-md transition-colors duration-200">
+                        <button data-category="3" class="category-btn h-7 px-2 text-xs min-w-[50px] flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fa-solid fa-copyright w-3 text-center"></i><span>作品</span>
                         </button>
-                        <button data-category="4" class="category-btn h-7 px-2 text-xs min-w-[50px] flex items-center justify-center gap-1 rounded-md transition-colors duration-200">
+                        <button data-category="4" class="category-btn h-7 px-2 text-xs min-w-[50px] flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fa-solid fa-user w-3 text-center"></i><span>角色</span>
                         </button>
-                        <button data-category="5" class="category-btn h-7 px-2 text-xs min-w-[50px] flex items-center justify-center gap-1 rounded-md transition-colors duration-200">
+                        <button data-category="5" class="category-btn h-7 px-2 text-xs min-w-[50px] flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fa-solid fa-info-circle w-3 text-center"></i><span>元数据</span>
                         </button>
-                        <button data-category="6" class="category-btn h-7 px-2 text-xs min-w-[50px] flex items-center justify-center gap-1 rounded-md transition-colors duration-200">
+                        <button data-category="6" class="category-btn h-7 px-2 text-xs min-w-[50px] flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fa-solid fa-cogs w-3 text-center"></i><span>Kontext</span>
                         </button>
                     </div>
@@ -391,13 +439,11 @@
                 selectedCount: document.getElementById('selected-count'),
                 allCategoriesBtn: document.getElementById('all-categories'),
                 tagTooltip: document.getElementById('tag-tooltip'),
-                totalTagsStat: document.getElementById('total-tags-stat'),
-                cat0Stat: document.getElementById('cat-0-stat'),
-                cat1Stat: document.getElementById('cat-1-stat'),
-                cat3Stat: document.getElementById('cat-3-stat'),
-                cat4Stat: document.getElementById('cat-4-stat'),
-                cat5Stat: document.getElementById('cat-5-stat'),
-                cat6Stat: document.getElementById('cat-6-stat')
+                statsButtonsContainer: document.getElementById('stats-buttons-container'),
+                tagDetailsCard: document.getElementById('tag-details-card'),
+                tagDetailsContent: document.getElementById('tag-details-content'),
+                promptInput: document.getElementById('prompt-input'),
+                parsePromptBtn: document.getElementById('parse-prompt-btn')
             };
             
             // 状态变量
@@ -485,16 +531,9 @@
                 
                 updateStats: () => {
                     if (state.allTags.length === 0) return;
-                    
+
                     // 重置计数
-                    state.categoryCounts = {
-                        '0': 0,
-                        '1': 0,
-                        '3': 0,
-                        '4': 0,
-                        '5': 0,
-                        '6': 0
-                    };
+                    state.categoryCounts = { '0': 0, '1': 0, '3': 0, '4': 0, '5': 0, '6': 0 };
                     
                     // 计算每个类别的数量
                     state.allTags.forEach(tag => {
@@ -503,15 +542,20 @@
                             state.categoryCounts[catId]++;
                         }
                     });
-                    
+
                     // 更新UI
-                    elements.totalTagsStat.textContent = state.allTags.length.toLocaleString();
-                    elements.cat0Stat.textContent = state.categoryCounts['0'].toLocaleString();
-                    elements.cat1Stat.textContent = state.categoryCounts['1'].toLocaleString();
-                    elements.cat3Stat.textContent = state.categoryCounts['3'].toLocaleString();
-                    elements.cat4Stat.textContent = state.categoryCounts['4'].toLocaleString();
-                    elements.cat5Stat.textContent = state.categoryCounts['5'].toLocaleString();
-                    elements.cat6Stat.textContent = state.categoryCounts['6'].toLocaleString();
+                    const buttons = elements.statsButtonsContainer.querySelectorAll('.stat-button');
+                    buttons.forEach(btn => {
+                        const category = btn.dataset.category;
+                        const countSpan = btn.querySelector('span.font-bold');
+                        let count = 0;
+                        if (category === 'all') {
+                            count = state.allTags.length;
+                        } else if (state.categoryCounts[category]) {
+                            count = state.categoryCounts[category];
+                        }
+                        countSpan.textContent = count.toLocaleString();
+                    });
                 }
             };
             
@@ -526,7 +570,7 @@
                     
                     elements.tagList.innerHTML = '';
                     elements.paginationControls.innerHTML = '';
-                    elements.selectedTagsContainer.innerHTML = '';
+                    tagRenderer.renderSelectedTags(); // 确保占位符在加载时正确显示
                     elements.formattedOutput.value = '';
                     elements.selectedCount.textContent = '0';
                     
@@ -711,7 +755,10 @@
                             utils.cancelShowTooltip();
                         });
                         
-                        tagEl.addEventListener('click', () => tagManager.toggleTagSelection(tag, tagEl));
+                        tagEl.addEventListener('click', () => {
+                            tagManager.toggleTagSelection(tag, tagEl);
+                            tagDetails.show(tag);
+                        });
                         
                         elements.tagList.appendChild(tagEl);
                     });
@@ -725,9 +772,10 @@
                     
                     if (state.selectedTags.length === 0) {
                         elements.selectedTagsContainer.innerHTML = `
-                            <div class="flex flex-col items-center justify-center w-full h-full text-gray-400">
-                                <i class="fa-solid fa-tags text-3xl mb-2"></i>
-                                <p class="text-sm">尚未选择任何标签</p>
+                            <div class="flex flex-col items-center justify-center w-full h-full text-gray-400 p-4 text-center">
+                                <i class="fa-solid fa-hand-pointer text-3xl mb-2"></i>
+                                <p class="text-sm font-semibold">这里是已选标签区</p>
+                                <p class="text-xs mt-1">您可以从下方的“标签列表”点击添加标签，或在左侧“格式化文本”区粘贴并解析您的提示词。</p>
                             </div>
                         `;
                         
@@ -737,31 +785,40 @@
                     }
                     
                     state.selectedTags.forEach(tag => {
-                        const [enTag, catId, pop, alias, cnTag, l1, l2, notes] = tag;
-                        const displayText = state.selectedTagsLanguage === 'cn' ? 
-                            (tag[4] || enTag) : enTag;
-                            
-                        const category = CATEGORY_MAP[catId] || CATEGORY_MAP['0'];
+                        const isUnmatched = !tag[1]; // 未匹配的标签没有类别ID
+                        const enTag = tag[0];
                         
-                        // 创建标签详细信息（用于悬停提示）
-                        const details = [
-                            `英文: ${enTag || 'N/A'}`,
-                            `中文: ${cnTag || '无'}`,
-                            `别名: ${alias || '无'}`,
-                            `热度: ${pop || '0'}`,
-                            `类别: ${category.name}`,
-                            `一级分类: ${l1 || '无'}`,
-                            `二级分类: ${l2 || '无'}`,
-                            `备注: ${notes || '无'}`
-                        ].join('\n');
+                        let displayText, category, details, tagElClass;
+
+                        if (isUnmatched) {
+                            displayText = enTag;
+                            details = `未匹配标签: ${enTag}`;
+                            tagElClass = `unmatched-tag h-[32px] px-2 flex items-center justify-between gap-1 rounded-md shadow-sm border min-w-[60px] max-w-[180px] text-xs font-bold`;
+                        } else {
+                            const [_, catId, pop, alias, cnTag, l1, l2, notes] = tag;
+                            displayText = state.selectedTagsLanguage === 'cn' ? (cnTag || enTag) : enTag;
+                            category = CATEGORY_MAP[catId] || CATEGORY_MAP['0'];
+                            details = [
+                                `英文: ${enTag || 'N/A'}`,
+                                `中文: ${cnTag || '无'}`,
+                                `别名: ${alias || '无'}`,
+                                `热度: ${pop || '0'}`,
+                                `类别: ${category.name}`,
+                                `一级分类: ${l1 || '无'}`,
+                                `二级分类: ${l2 || '无'}`,
+                                `备注: ${notes || '无'}`
+                            ].join('\n');
+                            tagElClass = `selected-tag h-[32px] px-2 flex items-center justify-between gap-1 rounded-md shadow-sm border ${category.border} ${category.bg} ${category.text} min-w-[60px] max-w-[180px] text-xs font-bold`;
+                        }
                         
                         const tagEl = document.createElement('div');
-                        tagEl.className = `selected-tag h-7 px-2 flex items-center justify-between gap-1 rounded-md shadow-sm border ${category.border} ${category.bg} ${category.text} min-w-[60px] max-w-[180px] text-xs font-bold`;
+                        tagEl.className = tagElClass;
                         tagEl.innerHTML = `
                             <span class="truncate">${displayText}</span>
-                            <button class="remove-selected-tag-btn text-${category.color}-500 hover:text-${category.color}-700 font-bold text-lg leading-none">×</button>
+                            <button class="remove-selected-tag-btn font-bold text-lg leading-none ${isUnmatched ? 'text-red-700' : `text-${category.color}-500 hover:text-${category.color}-700`}">×</button>
                         `;
                         
+                        tagEl.dataset.enTag = enTag;
                         tagEl.dataset.details = details;
                         
                         // 添加悬停提示
@@ -836,6 +893,7 @@
                         el.classList.remove('tag-selected');
                     });
                     tagRenderer.renderSelectedTags();
+                    tagDetails.hide();
                 },
                 
                 applyFilters: () => {
@@ -849,7 +907,7 @@
                         
                         // 按搜索词过滤
                         if (query) {
-                            const searchText = `${tag[0]} ${tag[4]} ${tag[3]} ${tag[1]} ${tag[7]}`.toLowerCase();
+                            const searchText = `${tag[0]} ${tag[4]} ${tag[3]} ${tag[1]} ${tag[5]} ${tag[6]} ${tag[7]}`.toLowerCase();
                             return searchText.includes(query);
                         }
                         
@@ -858,6 +916,31 @@
                     
                     state.currentPage = 1;
                     tagRenderer.renderTagList();
+                }
+            };
+
+            // 标签详情模块
+            const tagDetails = {
+                show: (tag) => {
+                    const [enTag, catId, pop, alias, cnTag, l1, l2, notes] = tag;
+                    const category = CATEGORY_MAP[catId] || CATEGORY_MAP['0'];
+
+                    const detailsHtml = `
+                        <p><strong>英文:</strong> <span class="font-mono text-blue-600">${enTag || 'N/A'}</span></p>
+                        <p><strong>中文:</strong> ${cnTag || '无'}</p>
+                        <p><strong>类别:</strong> <span class="font-semibold" style="color: ${category.color}">${category.name}</span></p>
+                        <p><strong>热度:</strong> ${pop ? parseInt(pop).toLocaleString() : '0'}</p>
+                        <p><strong>别名:</strong> ${alias || '无'}</p>
+                        <p><strong>一级分类:</strong> ${l1 || '无'}</p>
+                        <p><strong>二级分类:</strong> ${l2 || '无'}</p>
+                        <p><strong>备注:</strong> ${notes || '无'}</p>
+                    `;
+
+                    elements.tagDetailsContent.innerHTML = detailsHtml;
+                    elements.tagDetailsCard.classList.remove('hidden');
+                },
+                hide: () => {
+                    elements.tagDetailsCard.classList.add('hidden');
                 }
             };
             
@@ -934,12 +1017,8 @@
                     group: 'shared',
                     onEnd: (evt) => {
                         const newOrder = Array.from(evt.to.children).map(el => {
-                            const enTag = el.querySelector('span').textContent;
-                            return state.selectedTags.find(tag => 
-                                state.selectedTagsLanguage === 'cn' ? 
-                                (tag[4] || tag[0]) === enTag : 
-                                tag[0] === enTag
-                            );
+                            const enTag = el.dataset.enTag;
+                            return state.selectedTags.find(tag => tag[0] === enTag);
                         }).filter(tag => tag);
                         
                         state.selectedTags = newOrder;
@@ -955,25 +1034,74 @@
             
             const updateCategoryButtonStyles = () => {
                 elements.categoryFilters.querySelectorAll('button').forEach(btn => {
-                    btn.classList.remove('bg-blue-500', 'text-white');
+                    btn.classList.remove('bg-blue-500', 'text-white', 'hover:bg-blue-600');
+                    btn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
                     
                     if ((btn === elements.allCategoriesBtn && state.currentCategory === 'all') || 
                         btn.dataset.category === state.currentCategory) {
-                        btn.classList.add('bg-blue-500', 'text-white');
+                        btn.classList.add('bg-blue-500', 'text-white', 'hover:bg-blue-600');
+                        btn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
                     }
                 });
             };
             
             const updateFormatButtonStyles = () => {
                 elements.formatControls.querySelectorAll('.format-btn').forEach(btn => {
-                    btn.classList.remove('active');
+                    btn.classList.remove('bg-blue-500', 'text-white', 'hover:bg-blue-600');
+                    btn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
                     
                     if (btn.dataset.format === state.currentFormat) {
-                        btn.classList.add('active');
+                        btn.classList.add('bg-blue-500', 'text-white', 'hover:bg-blue-600');
+                        btn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
                     }
                 });
             };
             
+            // 提示词解析模块
+            const promptParser = {
+                parse: () => {
+                    const text = elements.promptInput.value.trim();
+                    if (!text) return;
+
+                    // 首先清空当前所有已选标签
+                    tagManager.clearSelectedTags();
+
+                    // 智能检测分隔符
+                    const separator = text.includes(',') ? /,\s*/ : /\s+/;
+                    const rawTags = text.split(separator).filter(t => t);
+
+                    rawTags.forEach(rawTag => {
+                        // 规范化输入，将空格替换为下划线，并转为小写
+                        const normalizedTag = rawTag.trim().replace(/\s+/g, '_').toLowerCase();
+                        if (!normalizedTag) return;
+
+                        // 检查是否已选择
+                        if (state.selectedTags.some(t => t[0].toLowerCase() === normalizedTag)) {
+                            return; // 如果已存在，则跳过
+                        }
+
+                        // 尝试在 allTags 中精确查找
+                        let foundTag = state.allTags.find(t => t[0].toLowerCase() === normalizedTag);
+
+                        // 如果找不到，创建未匹配标签对象
+                        if (!foundTag) {
+                            foundTag = [rawTag.trim(), null]; // 使用原始输入作为显示，标记为未匹配
+                        }
+
+                        state.selectedTags.push(foundTag);
+                        
+                        // 更新主列表中的视觉状态
+                        const mainListEl = findTagElementInMainList(foundTag[0]);
+                        if (mainListEl) {
+                            mainListEl.classList.add('tag-selected');
+                        }
+                    });
+
+                    tagRenderer.renderSelectedTags();
+                    elements.promptInput.value = ''; // 清空输入框
+                }
+            };
+
             // 事件处理模块
             const eventHandler = {
                 init: () => {
@@ -1000,6 +1128,18 @@
                         } else if (btn.dataset.category) {
                             state.currentCategory = btn.dataset.category;
                         }
+                        
+                        updateCategoryButtonStyles();
+                        tagManager.applyFilters();
+                    });
+
+                    // 统计按钮事件
+                    elements.statsButtonsContainer.addEventListener('click', e => {
+                        const btn = e.target.closest('.stat-button');
+                        if (!btn) return;
+
+                        const category = btn.dataset.category;
+                        state.currentCategory = category;
                         
                         updateCategoryButtonStyles();
                         tagManager.applyFilters();
@@ -1054,6 +1194,7 @@
                     elements.clearSelectedBtn.addEventListener('click', tagManager.clearSelectedTags);
                     elements.copyTextBtn.addEventListener('click', formatter.copyToClipboard);
                     elements.saveWildcardBtn.addEventListener('click', formatter.saveAsWildcard);
+                    elements.parsePromptBtn.addEventListener('click', promptParser.parse);
                     
                     elements.reloadAppBtn.addEventListener('click', () => {
                         // 重置应用
@@ -1075,6 +1216,7 @@
                             },
                             tooltipTimeout: null
                         };
+                        updateCategoryButtonStyles();
                         
                         elements.selectedCount.textContent = '0';
                         elements.formattedOutput.value = '';
@@ -1083,14 +1225,9 @@
                         elements.paginationControls.innerHTML = '';
                         elements.selectedTagsContainer.innerHTML = '';
                         
-                        // 更新统计区域
-                        elements.totalTagsStat.textContent = '0';
-                        elements.cat0Stat.textContent = '0';
-                        elements.cat1Stat.textContent = '0';
-                        elements.cat3Stat.textContent = '0';
-                        elements.cat4Stat.textContent = '0';
-                        elements.cat5Stat.textContent = '0';
-                        elements.cat6Stat.textContent = '0';
+                        // 更新统计区域并隐藏详情卡
+                        utils.updateStats();
+                        tagDetails.hide();
                         
                         // 显示加载区
                         elements.loadAreaCard.classList.remove('hidden');
@@ -1115,7 +1252,7 @@
                     
                     // 初始选择默认按钮
                     updateFormatButtonStyles();
-                    elements.allCategoriesBtn.classList.add('bg-blue-500', 'text-white');
+                    updateCategoryButtonStyles();
                     
                     // 鼠标移动时更新提示位置
                     document.addEventListener('mousemove', (e) => {
