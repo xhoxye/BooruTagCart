@@ -9,6 +9,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     <style>
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20%);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0.5rem;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
             -webkit-font-smoothing: antialiased;
@@ -179,8 +189,9 @@
 <body>
     <div class="container mx-auto p-4 md:p-5 max-w-[1400px] min-h-screen flex flex-col compact-container">
         <!-- 紧凑的头部区域 -->
-        <header class="mb-3 flex justify-between items-center gap-3 p-3 rounded-xl bg-white shadow-sm">
+        <header class="flex justify-between items-center gap-3 p-3 rounded-xl -mt-4">
             <div class="flex items-center gap-3">
+                <!-- 网站标题 -->
                 <div class="w-8 h-8 rounded-md bg-blue-500 flex items-center justify-center">
                     <i class="fa-solid fa-tags text-white"></i>
                 </div>
@@ -190,6 +201,7 @@
                 </div>
             </div>
             <div class="flex-grow max-w-md flex items-center gap-2">
+                <!-- 搜索框和重置按钮 -->
                 <div class="relative w-full">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                     <input type="search" id="search-box" placeholder="搜索标签 (英文/中文/别名/分类/备注)..." class="w-full pl-9 pr-3 h-[36px] border border-gray-300 rounded-md focus:outline-none focus:border-transparent focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
@@ -199,7 +211,7 @@
                 </button>
             </div>
             <div class="flex-shrink-0">
-                <!-- 添加固定宽度的占位容器 -->
+                <!-- 添加固定宽度的占位容器 - 重新加载 按钮 -->
                 <div class="w-[120px]">
                     <button id="reload-app-btn" class="h-[36px] px-3 text-sm flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-blue-500 text-white hover:bg-blue-600 hidden">
                         <i class="fa-solid fa-arrows-rotate"></i> 重新加载
@@ -237,63 +249,11 @@
                 <div id="status-message" class="text-xs min-h-[1rem]">准备加载数据</div>
             </div>
         </div>
-        
+
+        <!-- 中间区域 -->
         <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-3">
-            <!-- 左栏 -->
-            <div class="md:col-span-1 flex flex-col gap-3">
-                <div class="p-3 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col">
-                    <div class="flex justify-between items-center mb-2">
-                        <h2 class="text-sm font-semibold text-gray-700">格式化文本</h2>
-                        <div id="copy-btn" class="flex items-center gap-1">
-                            <button id="copy-text-btn" class="h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md transition-colors duration-200 bg-blue-500 text-white hover:bg-blue-600">
-                                <i class="fa-solid fa-copy"></i><span class="hidden sm:inline">复制</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="format-controls" class="flex flex-wrap items-center gap-1 pb-2">
-                        <button data-format="comma-space" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
-                            <i class="fa-solid fa-grip-lines"></i><span class="hidden sm:inline">逗号分隔</span>
-                        </button>
-                        <button data-format="space" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
-                            <i class="fa-solid fa-grip-lines-vertical"></i><span class="hidden sm:inline">空格分隔</span>
-                        </button>
-                        <button data-format="space-underscore" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
-                            <i class="fa-solid fa-signature"></i><span class="hidden sm:inline">下划线转空格</span>
-                        </button>
-                        <button data-format="full" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
-                            <i class="fa-solid fa-asterisk"></i><span class="hidden sm:inline">全格式</span>
-                        </button>
-                    </div>
-                    <textarea 
-                        id="formatted-output" 
-                        readonly 
-                        class="w-full bg-gray-900 text-green-400 font-mono rounded-md p-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 h-32 no-scrollbar resize-none" 
-                        placeholder="已选标签组合编辑排序后，格式化文本将显示在这里...">
-                    </textarea>
 
-                    <!-- 新增：提示词解析区域 -->
-                    <div class="mt-2 pt-2 border-t border-gray-200">
-                        <h3 class="text-xs font-semibold text-gray-600 mb-1">粘贴提示词解析</h3>
-                        <textarea id="prompt-input" class="w-full bg-gray-100 border border-gray-300 rounded-md p-2 text-sm min-h-[100px] resize-y" placeholder="在此处粘贴提示词，例如：1girl, solo, long hair, masterpiece..."></textarea>
-                        <button id="parse-prompt-btn" class="w-full mt-1 h-8 px-3 text-sm flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-green-500 text-white hover:bg-green-600">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> 解析为标签
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- 标签详情区 - 修改为始终显示 -->
-                <div class="min-h-[290px]">
-                    <div id="tag-details-card" class="p-3 rounded-lg bg-white shadow-sm border border-gray-200">
-                        <h2 class="text-sm font-semibold text-gray-700 mb-2">标签详情</h2>
-                        <div id="tag-details-content" class="text-xs space-y-1">
-                            <p>请从下方列表中选择一个标签以查看其详细信息。</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- 右栏 -->
+            <!-- 现在是左栏 -->
             <div class="md:col-span-2 flex flex-col gap-3">
                 <div class="p-3 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col">
                     <div class="flex justify-between items-center mb-2">
@@ -345,49 +305,106 @@
                         </button>
                     </div>
                     
-                    <div id="tag-list-container" class="flex-grow overflow-hidden no-scrollbar py-1 p-1 min-h-[400px]">
+                    <div id="tag-list-container" class="flex-grow overflow-hidden no-scrollbar py-1 p-1 min-h-[410px]">
                         <div id="tag-list" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-4 gap-2"></div>
                     </div>
                     
                     <div id="pagination-controls" class="mt-2 pt-2 border-t border-gray-200 flex justify-center items-center gap-2 text-xs"></div>
                 </div>
+
+            </div>
+
+            <!-- 现在是右栏 -->
+            <div class="md:col-span-1 flex flex-col gap-3">
+                <div class="p-3 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col">
+                    <!-- 格式化文本展示区域 -->
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-sm font-semibold text-gray-700">格式化文本</h2>
+                        <div id="copy-btn" class="flex items-center gap-1">
+                            <button id="copy-text-btn" class="h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md transition-colors duration-200 bg-blue-500 text-white hover:bg-blue-600">
+                                <i class="fa-solid fa-copy"></i><span class="hidden sm:inline">复制</span>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea 
+                        id="formatted-output" 
+                        readonly 
+                        class="w-full bg-gray-900 text-green-400 font-mono rounded-md p-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 h-32 no-scrollbar resize-none" 
+                        placeholder="已选标签组合编辑排序后，格式化文本将显示在这里...">
+                    </textarea>
+                    <!-- 格式化按钮区域 -->
+                    <div id="format-controls" class="flex flex-wrap items-center gap-1 pt-2">
+                        <button data-format="comma-space" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
+                            <i class="fa-solid fa-grip-lines"></i><span class="hidden sm:inline">逗号分隔</span>
+                        </button>
+                        <button data-format="space" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
+                            <i class="fa-solid fa-grip-lines-vertical"></i><span class="hidden sm:inline">空格分隔</span>
+                        </button>
+                        <button data-format="space-underscore" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
+                            <i class="fa-solid fa-signature"></i><span class="hidden sm:inline">下划线转空格</span>
+                        </button>
+                        <button data-format="full" class="format-btn h-7 px-2 text-xs flex items-center justify-center gap-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
+                            <i class="fa-solid fa-asterisk"></i><span class="hidden sm:inline">全格式</span>
+                        </button>
+                    </div>
+
+                    <!-- 提示词解析区域 -->
+                    <div class="mt-2 pt-2 border-t border-gray-200">
+                        <h3 class="text-xs font-semibold text-gray-600 mb-1">粘贴提示词解析</h3>
+                        <textarea id="prompt-input" class="w-full bg-gray-100 border border-gray-300 rounded-md p-2 text-sm min-h-[100px] resize-y" placeholder="在此处粘贴提示词，例如：1girl, solo, long hair, masterpiece..."></textarea>
+                        <button id="parse-prompt-btn" class="w-full mt-1 h-8 px-3 text-sm flex items-center justify-center gap-2 rounded-md transition-colors duration-200 bg-green-500 text-white hover:bg-green-600">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> 解析为标签
+                        </button>
+                    </div>
+
+                </div>
                 
-                <!-- 移动标签统计区到标签列表下方 -->
-                <!-- 标签数据统计区 -->
-                <div class="p-3 rounded-lg stats-card shadow-sm">
-                    <h2 class="text-sm font-semibold text-gray-700 mb-2">标签统计</h2>
-                    <div id="stats-buttons-container" class="grid grid-cols-7 gap-2 text-sm"> <!-- grid grid-cols-7 7列一行 -->
-                        <button data-category="all" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
-                            <span class="font-bold text-blue-600 text-base">0</span>
-                            <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-globe text-gray-500"></i> 全部</span>
-                        </button>
-                        <button data-category="0" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
-                            <span class="font-bold text-blue-600 text-base">0</span>
-                            <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-tag text-blue-500"></i> 通用</span>
-                        </button>
-                        <button data-category="1" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
-                            <span class="font-bold text-blue-600 text-base">0</span>
-                            <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-palette text-red-500"></i> 画师</span>
-                        </button>
-                        <button data-category="3" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
-                            <span class="font-bold text-blue-600 text-base">0</span>
-                            <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-copyright text-purple-500"></i> 作品</span>
-                        </button>
-                        <button data-category="4" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
-                            <span class="font-bold text-blue-600 text-base">0</span>
-                            <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-user text-green-500"></i> 角色</span>
-                        </button>
-                        <button data-category="5" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
-                            <span class="font-bold text-blue-600 text-base">0</span>
-                            <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-info-circle text-orange-500"></i> 元数据</span>
-                        </button>
-                        <button data-category="6" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
-                            <span class="font-bold text-blue-600 text-base">0</span>
-                            <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-cogs text-pink-500"></i> Kontext</span>
-                        </button>
+                <!-- 标签详情区 - 始终显示 -->
+                <div class="min-h-[290px]">
+                    <div id="tag-details-card" class="p-3 rounded-lg bg-white shadow-sm border border-gray-200">
+                        <h2 class="text-sm font-semibold text-gray-700 mb-2">标签详情</h2>
+                        <div id="tag-details-content" class="text-xs space-y-1">
+                            <p>请点击选择一个标签以查看其详细信息。</p>
+                        </div>
                     </div>
                 </div>
 
+            </div>
+
+        </div>
+
+        <!-- 标签数据统计区 为底部 -->
+        <div class="p-3 rounded-lg stats-card shadow-sm">
+            <h2 class="text-sm font-semibold text-gray-700 mb-2">标签统计</h2>
+            <div id="stats-buttons-container" class="grid grid-cols-7 gap-2 text-sm"> <!-- grid grid-cols-7 7列一行 -->
+                <button data-category="all" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
+                    <span class="font-bold text-blue-600 text-base">0</span>
+                    <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-globe text-gray-500"></i> 全部</span>
+                </button>
+                <button data-category="0" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
+                    <span class="font-bold text-blue-600 text-base">0</span>
+                    <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-tag text-blue-500"></i> 通用</span>
+                </button>
+                <button data-category="1" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
+                    <span class="font-bold text-blue-600 text-base">0</span>
+                    <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-palette text-red-500"></i> 画师</span>
+                </button>
+                <button data-category="3" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
+                    <span class="font-bold text-blue-600 text-base">0</span>
+                    <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-copyright text-purple-500"></i> 作品</span>
+                </button>
+                <button data-category="4" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
+                    <span class="font-bold text-blue-600 text-base">0</span>
+                    <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-user text-green-500"></i> 角色</span>
+                </button>
+                <button data-category="5" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
+                    <span class="font-bold text-blue-600 text-base">0</span>
+                    <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-info-circle text-orange-500"></i> 元数据</span>
+                </button>
+                <button data-category="6" class="stat-button p-2 rounded-md transition-colors duration-200 flex flex-col items-center justify-center bg-gray-200 hover:bg-gray-300 h-16">
+                    <span class="font-bold text-blue-600 text-base">0</span>
+                    <span class="text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-cogs text-pink-500"></i> Kontext</span>
+                </button>
             </div>
         </div>
 
@@ -939,7 +956,7 @@
             const tagDetails = {
                 update: (tag) => {  // 重命名 show 为 update
                     if (!tag) {
-                        elements.tagDetailsContent.innerHTML = '<p>请从下方列表中选择一个标签以查看其详细信息。</p>';
+                        elements.tagDetailsContent.innerHTML = '<p>请点击选择一个标签以查看其详细信息。</p>';
                         return;
                     }
                     const [enTag, catId, pop, alias, cnTag, l1, l2, notes] = tag;
